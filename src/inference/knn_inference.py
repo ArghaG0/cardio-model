@@ -33,6 +33,6 @@ def screen_patient(new_patient_data,tree_path,labels_path, original_data_path):
 
 dummy_patient = [30.0, 1, 165, 60.0, 110, 70, 1, 1, 0, 0, 1]
 
-risk_percentage,similar_patients=screen_patient(dummy_patient,'../models/patient_similarity_tree.pkl','../data/cardio_target_labels.csv','../data/cardio_train.csv')
+risk_percentage,similar_patients=screen_patient(dummy_patient,'../../models/knn_model.pkl','../../data/cardio_target_labels.csv','../../data/cardio_train.csv')
 print("Cardiovascular Risk Probability:",risk_percentage,"%")
 print("Patients at indices:",similar_patients)

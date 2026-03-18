@@ -56,8 +56,8 @@ def screen_patient_dl(patient_data, model_path, original_data_path):
 patient_55_unhealthy = [55.0, 1, 170, 85.0, 150, 95, 3, 2, 1, 0, 1]
 patient_30_healthy = [30.0, 1, 165, 60.0, 110, 70, 1, 1, 0, 0, 1]
 
-risk_55 = screen_patient_dl(patient_55_unhealthy, '../models/cardio_net_v1.pth', '../data/cardio_train.csv')
-risk_30 = screen_patient_dl(patient_30_healthy, '../models/cardio_net_v1.pth', '../data/cardio_train.csv')
+risk_55 = screen_patient_dl(patient_55_unhealthy, '../../models/cardio_net_v1.pth', '../../data/cardio_train.csv')
+risk_30 = screen_patient_dl(patient_30_healthy, '../../models/cardio_net_v1.pth', '../../data/cardio_train.csv')
 
 print(f"55-Year-Old At-Risk Patient: {risk_55:.2f}% Probability")
 print(f"30-Year-Old Healthy Patient: {risk_30:.2f}% Probability")

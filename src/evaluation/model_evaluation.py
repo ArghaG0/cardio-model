@@ -5,7 +5,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.metrics import accuracy_score, precision_score, recall_score
 
-raw_df = pd.read_csv('../data/cardio_train.csv', sep=';')
+raw_df = pd.read_csv('../../data/cardio_train.csv', sep=';')
 
 raw_df = raw_df[(raw_df['ap_hi'] >= 90) & (raw_df['ap_hi'] <= 200)]
 raw_df = raw_df[(raw_df['ap_lo'] >= 60) & (raw_df['ap_lo'] <= 120)]
