@@ -1,47 +1,41 @@
-# data_preprocessing.py
-
 import pandas as pd
-from sklearn.preprocessing import StandardScaler
-import pickle
 import os
 
-def prepare_screening_data(filepath):
-    df = pd.read_csv(filepath, sep=';')
+def prepare_screening_data(input_path, output_features_path, output_labels_path):
+    df = pd.read_csv(input_path, sep=';')
 
-    # Feature engineering
     df['age_years'] = df['age'] / 365.25
-    df = df.drop(['age', 'id'], axis=1)
+    df['bmi'] = df['weight'] / ((df['height'] / 100) ** 2)
+    df['pulse_pressure'] = df['ap_hi'] - df['ap_lo']
+    df['age_bp_risk'] = df['age_years'] * df['ap_hi']
+    df['chol_bp_risk'] = df['cholesterol'] * df['ap_hi']
+
+    df = df[(df['ap_hi'] > 0) & (df['ap_lo'] > 0)]
+    df = df[(df['ap_hi'] < 250) & (df['ap_lo'] < 200)]
 
     features = [
-        'age_years','gender','height','weight',
-        'ap_hi','ap_lo','cholesterol','gluc',
-        'smoke','alco','active'
+        'age_years', 'gender', 'height', 'weight',
+        'ap_hi', 'ap_lo', 'cholesterol', 'gluc',
+        'smoke', 'alco', 'active',
+        'bmi', 'pulse_pressure', 'age_bp_risk', 'chol_bp_risk'
     ]
-    target = 'cardio'
+
+    df = df.drop(['age', 'id'], axis=1, errors='ignore')
 
     X = df[features]
-    y = df[target]
+    y = df['cardio']
 
-    # Fit scaler
-    scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    os.makedirs(os.path.dirname(output_features_path), exist_ok=True)
+    os.makedirs(os.path.dirname(output_labels_path), exist_ok=True)
 
-    # ✅ SAVE SCALER (IMPORTANT)
-    os.makedirs('../../models', exist_ok=True)
-    with open('../../models/standard_scaler.pkl', 'wb') as f:
-        pickle.dump(scaler, f)
+    X.to_csv(output_features_path, index=False)
+    y.to_csv(output_labels_path, index=False)
 
-    print("Scaler saved successfully ✅")
+    return X, y
 
-    X_scaled_df = pd.DataFrame(X_scaled, columns=features)
-    return X_scaled_df, y
-
-
-# Run preprocessing
-X_data, y_labels = prepare_screening_data('../../data/cardio_train.csv')
-
-print(X_data.head())
-
-# Save processed data
-X_data.to_csv('../../data/normalized_cardio_data.csv', index=False)
-y_labels.to_csv('../../data/cardio_target_labels.csv', index=False)
+if __name__ == "__main__":
+    prepare_screening_data(
+        input_path="../../data/cardio_train.csv",
+        output_features_path="../../data/processed/unscaled_cardio_features.csv",
+        output_labels_path="../../data/processed/cardio_target_labels.csv"
+    )
