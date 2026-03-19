@@ -8,8 +8,7 @@ def evaluate_model(model, X_test, y_test):
     rec = recall_score(y_test, predictions)
     f1 = f1_score(y_test, predictions)
 
-    print("\nMODEL PERFORMANCE ON UNSEEN TEST DATA")
-    print("=========================================")
+    print("\nModel performance on unseen test data:")
     print(f"Accuracy  : {acc * 100:.2f}%")
     print(f"Precision : {prec * 100:.2f}%")
     print(f"Recall    : {rec * 100:.2f}%")
