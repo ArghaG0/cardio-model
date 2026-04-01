@@ -1,0 +1,13 @@
+# Python Bytecode
+__pycache__/
+*.pyc
+
+# Environment Secrets
+.env
+
+# Datasets (Too large for GitHub)
+data/
+
+# Serialized Models (Too large for GitHub)
+models/*.pkl
+models/*.pth

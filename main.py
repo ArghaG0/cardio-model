@@ -1,6 +1,6 @@
 import os
 from src.preprocessing.data_preprocessing import prepare_screening_data
-from src.training.train_knn import train_knn_model
+from src.training.train_advanced import train_all_models
 from src.evaluation.model_evaluation import evaluate_model
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -9,8 +9,7 @@ def run_pipeline():
     raw_data_path = os.path.join(BASE_DIR, "data", "cardio_train.csv")
     unscaled_features_path = os.path.join(BASE_DIR, "data", "processed", "unscaled_cardio_features.csv")
     target_labels_path = os.path.join(BASE_DIR, "data", "processed", "cardio_target_labels.csv")
-    model_save_path = os.path.join(BASE_DIR, "models", "knn_model.pkl")
-    scaler_save_path = os.path.join(BASE_DIR, "models", "scaler.pkl")
+    models_dir = os.path.join(BASE_DIR, "models")
 
     print("Starting Data Preprocessing...")
     prepare_screening_data(
@@ -19,17 +18,18 @@ def run_pipeline():
         output_labels_path=target_labels_path
     )
 
-    print("Starting Model Training...")
-    knn_model, scaler, X_test_scaled, y_test = train_knn_model(
+    print("\nStarting Model Training for Multiple Algorithms...")
+    trained_models, scaler, X_test_scaled, y_test = train_all_models(
         features_path=unscaled_features_path,
         labels_path=target_labels_path,
-        model_save_path=model_save_path,
-        scaler_save_path=scaler_save_path,
-        k=10
+        models_dir=models_dir
     )
 
-    print("Evaluating Model...")
-    evaluate_model(knn_model, X_test_scaled, y_test)
+    print("\nEvaluating All Models on Unseen Test Data...")
+    for name, model in trained_models.items():
+        print(f"\n=========================================")
+        print(f"--- MODEL: {name.upper()} ---")
+        evaluate_model(model, X_test_scaled, y_test)
 
 if __name__ == "__main__":
     run_pipeline()
