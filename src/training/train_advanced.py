@@ -5,9 +5,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
+from sklearn.neighbors import KNeighborsClassifier
 from xgboost import XGBClassifier
 
-def train_all_models(features_path, labels_path, models_dir):
+def train_all_models(features_path, labels_path, models_dir, knn_k=10):
     X = pd.read_csv(features_path)
     y = pd.read_csv(labels_path)
 
@@ -19,14 +20,11 @@ def train_all_models(features_path, labels_path, models_dir):
     X_train_scaled = scaler.fit_transform(X_train)
     X_test_scaled = scaler.transform(X_test)
 
-    rf_model = RandomForestClassifier(n_estimators=100, random_state=42)
-    xgb_model = XGBClassifier(eval_metric='logloss', random_state=42)
-    mlp_model = MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42)
-
     models = {
-        "RandomForest": rf_model,
-        "XGBoost": xgb_model,
-        "DeepLearning": mlp_model
+        "RandomForest": RandomForestClassifier(n_estimators=100, random_state=42),
+        "XGBoost": XGBClassifier(eval_metric='logloss', random_state=42),
+        "DeepLearning": MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500, random_state=42),
+        "KNN": KNeighborsClassifier(n_neighbors=knn_k, algorithm='kd_tree', metric='euclidean')
     }
 
     os.makedirs(models_dir, exist_ok=True)
@@ -43,3 +41,11 @@ def train_all_models(features_path, labels_path, models_dir):
             pickle.dump(model, file)
 
     return trained_models, scaler, X_test_scaled, y_test
+
+if __name__ == "__main__":
+    train_all_models(
+        features_path="../../data/processed/unscaled_cardio_features.csv",
+        labels_path="../../data/processed/cardio_target_labels.csv",
+        models_dir="../../models",
+        knn_k=10
+    )
