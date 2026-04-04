@@ -11,3 +11,6 @@ data/
 # Serialized Models (Too large for GitHub)
 models/*.pkl
 models/*.pth
+
+#Graphs and Plots
+reports/
