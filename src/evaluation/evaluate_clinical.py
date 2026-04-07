@@ -16,7 +16,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
 
     models = {
         "RandomForest": RandomForestClassifier(n_estimators=100, max_depth=5, random_state=42),
-        "XGBoost": XGBClassifier(eval_metric='logloss', max_depth=3, learning_rate=0.05, n_estimators=100, random_state=42),
+        "XGBoost": XGBClassifier( eval_metric='logloss', max_depth=2, learning_rate=0.05, n_estimators=150, subsample=1.0, colsample_bytree=0.8, gamma=1.0, reg_alpha=0.1, reg_lambda=0.1, random_state=42 ),
         "DeepLearning": MLPClassifier(hidden_layer_sizes=(32, 16), max_iter=1000, random_state=42),
         "KNN": KNeighborsClassifier(n_neighbors=5)
     }
@@ -44,7 +44,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
     avg_metrics = {name: {metric: np.mean(vals) for metric, vals in metrics_dict.items()} for name, metrics_dict in results.items()}
 
     for name, metrics in avg_metrics.items():
-        print(f"\n--- {name.upper()} (Averaged over {splits} folds) ---")
+        print(f"\n--- {name.upper()} ---")
         print(f"Accuracy  : {metrics['Accuracy']:.2f}%")
         print(f"Precision : {metrics['Precision']:.2f}%")
         print(f"Recall    : {metrics['Recall']:.2f}%")
@@ -71,7 +71,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
                         ha='center', va='bottom', fontsize=9, rotation=90)
 
     ax.set_ylabel('Percentage (%)', fontsize=12, fontweight='bold')
-    ax.set_title(f'Algorithm Tournament Results (Clinical Data - {splits}-Fold CV)', fontsize=14, pad=20, fontweight='bold')
+    ax.set_title(f'Algorithm Tournament Results', fontsize=14, pad=20, fontweight='bold')
     ax.set_xticks(x)
     ax.set_xticklabels(labels, fontsize=11)
     ax.set_ylim(70, 95)
@@ -84,7 +84,8 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
     
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(os.path.join(output_dir, 'clinical_algorithm_comparison.png'), dpi=300)
-    plt.show()
+
+    return avg_metrics
 
 if __name__ == "__main__":
     pass
