@@ -84,7 +84,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
     
     os.makedirs(output_dir, exist_ok=True)
     plt.savefig(os.path.join(output_dir, 'clinical_algorithm_comparison.png'), dpi=300)
-
+    plt.show()
     return avg_metrics
 
 if __name__ == "__main__":
