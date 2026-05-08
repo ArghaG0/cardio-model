@@ -8,15 +8,17 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def run_clinical_pipeline():
-    raw_data_path  = os.path.join(BASE_DIR, "data", "heart.csv")
-    features_path  = os.path.join(BASE_DIR, "data", "processed", "clinical_features.csv")
-    labels_path    = os.path.join(BASE_DIR, "data", "processed", "clinical_labels.csv")
-    models_dir     = os.path.join(BASE_DIR, "models")
-    reports_dir    = os.path.join(BASE_DIR, "reports", "figures")
+    raw_data_path    = os.path.join(BASE_DIR, "data", "heart.csv")
+    cleveland_path   = os.path.join(BASE_DIR, "data", "heart_cleveland_upload.csv")
+    features_path    = os.path.join(BASE_DIR, "data", "processed", "clinical_features.csv")
+    labels_path      = os.path.join(BASE_DIR, "data", "processed", "clinical_labels.csv")
+    models_dir       = os.path.join(BASE_DIR, "models")
+    reports_dir      = os.path.join(BASE_DIR, "reports", "figures")
 
     print("Starting Clinical Data Preprocessing...")
     prepare_clinical_data(
         input_path=raw_data_path,
+        cleveland_path=cleveland_path,       # <-- merges Cleveland into training data
         output_features_path=features_path,
         output_labels_path=labels_path
     )
@@ -29,7 +31,6 @@ def run_clinical_pipeline():
         splits=5
     )
 
-    # Quality gate: use the Ensemble accuracy (best model)
     ensemble_accuracy = metrics["Ensemble"]["Accuracy"]
     xgb_accuracy      = metrics["XGBoost"]["Accuracy"]
 
@@ -38,7 +39,7 @@ def run_clinical_pipeline():
     print(f"  XGBoost  Accuracy = {xgb_accuracy:.2f}%")
     print(f"  Ensemble Accuracy = {ensemble_accuracy:.2f}%")
 
-    if ensemble_accuracy >= 88.0:
+    if ensemble_accuracy >= 90.0:
         print("Status: PASSED. Deploying production models...")
         train_clinical_models(
             features_path=features_path,
@@ -47,8 +48,8 @@ def run_clinical_pipeline():
         )
         print(f"Deployment Complete! Models saved to: {models_dir}")
     else:
-        print("Status: FAILED. Ensemble accuracy below 88.0% threshold.")
-        print("Deployment Aborted. Artifacts were not saved.")
+        print("Status: FAILED. Ensemble accuracy below 90.0% threshold.")
+        print("Deployment Aborted.")
         sys.exit(1)
 
 
