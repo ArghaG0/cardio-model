@@ -2,26 +2,27 @@ import pandas as pd
 import os
 
 def prepare_clinical_data(input_path, output_features_path, output_labels_path):
-    print("Loading Kaggle clinical dataset...")
     df = pd.read_csv(input_path)
 
-    # Convert text categories into binary mathematical columns (0s and 1s)
-    # drop_first=True prevents the "dummy variable trap" in machine learning
+    df = df[df['RestingBP'] > 0].copy()
+
+    df['Shock_Index'] = df['MaxHR'] / df['RestingBP']
+    df['HR_Deficit'] = (220 - df['Age']) - df['MaxHR']
+    df['Age_BP_Risk'] = df['Age'] * df['RestingBP']
+
     categorical_cols = ['Sex', 'ChestPainType', 'RestingECG', 'ExerciseAngina', 'ST_Slope']
     df_encoded = pd.get_dummies(df, columns=categorical_cols, drop_first=True)
 
-    # In the Kaggle dataset, the target column is usually 'HeartDisease'
     X = df_encoded.drop('HeartDisease', axis=1)
     y = df_encoded['HeartDisease']
 
-    # Ensure output directories exist
     os.makedirs(os.path.dirname(output_features_path), exist_ok=True)
     os.makedirs(os.path.dirname(output_labels_path), exist_ok=True)
 
     X.to_csv(output_features_path, index=False)
     y.to_csv(output_labels_path, index=False)
     
-    print(f"Successfully processed {len(X)} patients with clinical features.")
+    print(f"Successfully processed {len(X)} patients with {X.shape[1]} clinical features.")
     return X, y
 
 if __name__ == "__main__":
