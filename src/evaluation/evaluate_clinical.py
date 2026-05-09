@@ -149,6 +149,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
         print(f"F1 Score  : {metrics['F1 Score']:.2f}%")
 
     _plot_results(avg_metrics, output_dir)
+    _plot_cardiostack_spider(avg_metrics, output_dir)
     return avg_metrics
 
 
@@ -189,6 +190,33 @@ def _plot_results(avg_metrics, output_dir):
     plt.close()
     print(f"\nChart saved to: {out_path}")
 
+def _plot_cardiostack_spider(avg_metrics, output_dir):
+    labels = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
+    num_vars = len(labels)
+    
+    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    angles += angles[:1] 
+    
+    fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+    
+    if "CardioStack" in avg_metrics:
+        values = [avg_metrics["CardioStack"][m] for m in labels]
+        values += values[:1] 
+        
+        ax.plot(angles, values, color='#e74c3c', linewidth=2, linestyle='solid', label='CardioStack')
+        ax.fill(angles, values, color='#e74c3c', alpha=0.2)
+        
+    ax.set_theta_offset(np.pi / 2)
+    ax.set_theta_direction(-1)
+    ax.set_thetagrids(np.degrees(angles[:-1]), labels, fontsize=12, fontweight='bold')
+    ax.set_ylim(70, 100) 
+    
+    plt.title('CardioStack Performance Signature', size=15, fontweight='bold', y=1.1)
+    
+    out_path = os.path.join(output_dir, 'cardiostack_spider_chart.png')
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"\nSpider chart saved to: {out_path}")
 
 if __name__ == "__main__":
     pass
