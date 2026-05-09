@@ -4,7 +4,8 @@ import matplotlib.pyplot as plt
 import os
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
+from sklearn.metrics import (accuracy_score, precision_score, recall_score,
+                              f1_score, roc_curve, auc)
 from sklearn.ensemble import (RandomForestClassifier, AdaBoostClassifier,
                                ExtraTreesClassifier,
                                GradientBoostingClassifier, VotingClassifier,
@@ -92,6 +93,10 @@ def _build_ensemble():
     ], voting='soft')
 
 
+# ─────────────────────────────────────────────────────────────────────────────
+# Main evaluation
+# ─────────────────────────────────────────────────────────────────────────────
+
 def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
     X = pd.read_csv(features_path).values
     y = pd.read_csv(labels_path).values.ravel()
@@ -116,8 +121,12 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
 
     skf = StratifiedKFold(n_splits=splits, shuffle=True, random_state=42)
     model_names = list(make_models().keys())
+
     results = {name: {'Accuracy': [], 'Precision': [], 'Recall': [], 'F1 Score': []}
                for name in model_names}
+
+    # Store per-fold ROC data for every model so we can plot all curves
+    roc_data = {name: {'fpr': [], 'tpr': [], 'auc': []} for name in model_names}
 
     for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
         print(f"  Fold {fold + 1}/{splits}...")
@@ -129,12 +138,20 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
             X_tr = scaler.fit_transform(X_train)
             X_te = scaler.transform(X_test)
             model.fit(X_tr, y_train)
-            y_pred = model.predict(X_te)
+            y_pred      = model.predict(X_te)
+            y_prob      = model.predict_proba(X_te)[:, 1]   # positive-class probability
 
             results[name]['Accuracy'].append(accuracy_score(y_test, y_pred) * 100)
             results[name]['Precision'].append(precision_score(y_test, y_pred, zero_division=0) * 100)
             results[name]['Recall'].append(recall_score(y_test, y_pred, zero_division=0) * 100)
             results[name]['F1 Score'].append(f1_score(y_test, y_pred, zero_division=0) * 100)
+
+            # ROC per fold
+            fpr, tpr, _ = roc_curve(y_test, y_prob)
+            fold_auc     = auc(fpr, tpr)
+            roc_data[name]['fpr'].append(fpr)
+            roc_data[name]['tpr'].append(tpr)
+            roc_data[name]['auc'].append(fold_auc)
 
     avg_metrics = {
         name: {metric: np.mean(vals) for metric, vals in m.items()}
@@ -147,12 +164,19 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
         print(f"Precision : {metrics['Precision']:.2f}%")
         print(f"Recall    : {metrics['Recall']:.2f}%")
         print(f"F1 Score  : {metrics['F1 Score']:.2f}%")
+        print(f"Mean AUC  : {np.mean(roc_data[name]['auc']):.4f}")
 
     _plot_results(avg_metrics, output_dir)
     _plot_cardiostack_spider(avg_metrics, output_dir)
-    _plot_cardiostack_fold_progress(results, output_dir)
+    _plot_cardiostack_fold_progress(results, roc_data, output_dir)
+    _plot_roc_all_models(roc_data, output_dir)
+
     return avg_metrics
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chart 1 — Bar comparison (all 6 models, unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
 
 def _plot_results(avg_metrics, output_dir):
     labels = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
@@ -191,70 +215,201 @@ def _plot_results(avg_metrics, output_dir):
     plt.close()
     print(f"\nChart saved to: {out_path}")
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chart 2 — Spider chart for CardioStack (your version, unchanged)
+# ─────────────────────────────────────────────────────────────────────────────
+
 def _plot_cardiostack_spider(avg_metrics, output_dir):
     labels = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
     num_vars = len(labels)
-    
+
     angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
-    angles += angles[:1] 
-    
+    angles += angles[:1]
+
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
-    
+
     if "CardioStack" in avg_metrics:
         values = [avg_metrics["CardioStack"][m] for m in labels]
-        values += values[:1] 
-        
-        ax.plot(angles, values, color='#e74c3c', linewidth=2, linestyle='solid', label='CardioStack')
+        values += values[:1]
+
+        ax.plot(angles, values, color='#e74c3c', linewidth=2,
+                linestyle='solid', label='CardioStack')
         ax.fill(angles, values, color='#e74c3c', alpha=0.2)
-        
+
     ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
-    ax.set_thetagrids(np.degrees(angles[:-1]), labels, fontsize=12, fontweight='bold')
-    ax.set_ylim(70, 100) 
-    
-    plt.title('CardioStack Performance Signature', size=15, fontweight='bold', y=1.1)
-    
+    ax.set_thetagrids(np.degrees(angles[:-1]), labels,
+                      fontsize=12, fontweight='bold')
+    ax.set_ylim(70, 100)
+
+    plt.title('CardioStack Performance Signature',
+              size=15, fontweight='bold', y=1.1)
+
+    os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, 'cardiostack_spider_chart.png')
     plt.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"\nSpider chart saved to: {out_path}")
+    print(f"Spider chart saved to: {out_path}")
 
-def _plot_cardiostack_fold_progress(results, output_dir):
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chart 3 — Fold progress + ROC/AUC per fold (your chart extended)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _plot_cardiostack_fold_progress(results, roc_data, output_dir):
+    """
+    3-panel figure for CardioStack:
+      Panel 1 — F1 & Accuracy per fold
+      Panel 2 — Precision & Recall per fold
+      Panel 3 — ROC curve per fold with mean AUC (NEW)
+    """
     if 'CardioStack' not in results:
         return
 
     folds = np.arange(1, len(results['CardioStack']['Accuracy']) + 1)
-    acc = results['CardioStack']['Accuracy']
-    f1 = results['CardioStack']['F1 Score']
+    acc  = results['CardioStack']['Accuracy']
+    f1   = results['CardioStack']['F1 Score']
     prec = results['CardioStack']['Precision']
-    rec = results['CardioStack']['Recall']
+    rec  = results['CardioStack']['Recall']
 
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
-    fig.suptitle('CardioStack v2 — Cross-Validation Progress per Fold', fontsize=14, fontweight='bold', y=1.05)
+    cs_fpr  = roc_data['CardioStack']['fpr']
+    cs_tpr  = roc_data['CardioStack']['tpr']
+    cs_aucs = roc_data['CardioStack']['auc']
 
-    ax1.plot(folds, f1, marker='o', color='#2b6cb0', linestyle='-', linewidth=2, label='F1 Score')
-    ax1.plot(folds, acc, marker='s', color='#38a169', linestyle='--', linewidth=2, label='Accuracy')
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(20, 5))
+    fig.suptitle('CardioStack v2 — Cross-Validation Progress per Fold',
+                 fontsize=14, fontweight='bold', y=1.03)
+
+    # Panel 1: F1 & Accuracy
+    ax1.plot(folds, f1,  marker='o', color='#2b6cb0', linewidth=2, label='F1 Score')
+    ax1.plot(folds, acc, marker='s', color='#38a169', linewidth=2,
+             linestyle='--', label='Accuracy')
     ax1.set_title('F1 & Accuracy', fontsize=13)
     ax1.set_xlabel('CV Fold', fontsize=11)
+    ax1.set_ylabel('Score (%)', fontsize=11)
     ax1.set_xticks(folds)
-    ax1.grid(True, linestyle='-', alpha=0.4)
+    ax1.set_ylim(80, 100)
+    ax1.grid(True, linestyle='--', alpha=0.4)
     ax1.legend(loc='lower right')
 
-    ax2.plot(folds, prec, marker='o', color='#c53030', linestyle='-', linewidth=2, label='Precision')
-    ax2.plot(folds, rec, marker='s', color='#d69e2e', linestyle='--', linewidth=2, label='Recall')
+    # Panel 2: Precision & Recall
+    ax2.plot(folds, prec, marker='o', color='#c53030', linewidth=2, label='Precision')
+    ax2.plot(folds, rec,  marker='s', color='#d69e2e', linewidth=2,
+             linestyle='--', label='Recall')
     ax2.set_title('Precision & Recall', fontsize=13)
     ax2.set_xlabel('CV Fold', fontsize=11)
+    ax2.set_ylabel('Score (%)', fontsize=11)
     ax2.set_xticks(folds)
-    ax2.grid(True, linestyle='-', alpha=0.4)
+    ax2.set_ylim(80, 100)
+    ax2.grid(True, linestyle='--', alpha=0.4)
     ax2.legend(loc='lower right')
 
+    # Panel 3: ROC curves per fold (NEW)
+    fold_colors = ['#3182ce', '#e53e3e', '#38a169', '#d69e2e', '#805ad5']
+    for i, (fpr, tpr, fold_auc) in enumerate(zip(cs_fpr, cs_tpr, cs_aucs)):
+        ax3.plot(fpr, tpr,
+                 color=fold_colors[i % len(fold_colors)],
+                 linewidth=1.6, alpha=0.75,
+                 label=f'Fold {i+1}  AUC = {fold_auc:.3f}')
+
+    # Mean ROC — interpolate all fold curves onto a common FPR grid
+    mean_fpr = np.linspace(0, 1, 300)
+    interp_tprs = [np.interp(mean_fpr, fpr, tpr)
+                   for fpr, tpr in zip(cs_fpr, cs_tpr)]
+    mean_tpr = np.mean(interp_tprs, axis=0)
+    mean_tpr[0] = 0.0        # anchor at origin
+    mean_tpr[-1] = 1.0       # anchor at top-right
+    mean_auc = np.mean(cs_aucs)
+
+    ax3.plot(mean_fpr, mean_tpr,
+             color='#1a1a2e', linewidth=2.5, linestyle='--',
+             label=f'Mean AUC = {mean_auc:.3f}')
+
+    # Diagonal chance line
+    ax3.plot([0, 1], [0, 1],
+             color='#999999', linewidth=1, linestyle=':',
+             label='Random (AUC = 0.500)')
+
+    ax3.set_title('ROC Curve per Fold', fontsize=13)
+    ax3.set_xlabel('False Positive Rate', fontsize=11)
+    ax3.set_ylabel('True Positive Rate', fontsize=11)
+    ax3.set_xlim([0.0, 1.0])
+    ax3.set_ylim([0.0, 1.02])
+    ax3.grid(True, linestyle='--', alpha=0.3)
+    ax3.legend(loc='lower right', fontsize=8.5)
+
     plt.tight_layout()
-    
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, 'cardiostack_fold_progress.png')
     plt.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"Fold progress chart saved to: {out_path}")
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Chart 4 — ROC/AUC comparison across ALL 6 models (bonus)
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _plot_roc_all_models(roc_data, output_dir):
+    """
+    Single ROC plot showing the mean ROC curve (across 5 folds) for every
+    model, so you can visually compare their discrimination ability.
+    AUC is a single number summarising the whole ROC curve —
+    1.0 = perfect, 0.5 = random guessing.
+    """
+    model_colors = {
+        'RandomForest': '#38a169',
+        'XGBoost':      '#3182ce',
+        'DeepLearning': '#805ad5',
+        'KNN':          '#d69e2e',
+        'Ensemble':     '#9b59b6',
+        'CardioStack':  '#e74c3c',
+    }
+
+    mean_fpr = np.linspace(0, 1, 300)
+    fig, ax = plt.subplots(figsize=(9, 7))
+
+    for name, data in roc_data.items():
+        interp_tprs = [np.interp(mean_fpr, fpr, tpr)
+                       for fpr, tpr in zip(data['fpr'], data['tpr'])]
+        mean_tpr      = np.mean(interp_tprs, axis=0)
+        mean_tpr[0]   = 0.0
+        mean_tpr[-1]  = 1.0
+        mean_auc      = np.mean(data['auc'])
+
+        lw = 2.8 if name == 'CardioStack' else 1.8
+        ls = '-'  if name == 'CardioStack' else '--'
+
+        ax.plot(mean_fpr, mean_tpr,
+                color=model_colors.get(name, '#333333'),
+                linewidth=lw, linestyle=ls,
+                label=f'{name}  (AUC = {mean_auc:.3f})')
+
+    # Chance line
+    ax.plot([0, 1], [0, 1],
+            color='#aaaaaa', linewidth=1, linestyle=':',
+            label='Random  (AUC = 0.500)')
+
+    ax.set_xlabel('False Positive Rate (1 − Specificity)', fontsize=12)
+    ax.set_ylabel('True Positive Rate (Sensitivity / Recall)', fontsize=12)
+    ax.set_title('ROC Curve Comparison — All Models\n'
+                 '5-Fold CV Mean  |  Clinical + Cleveland  |  1,214 patients',
+                 fontsize=13, fontweight='bold', pad=14)
+    ax.set_xlim([0.0, 1.0])
+    ax.set_ylim([0.0, 1.02])
+    ax.grid(True, linestyle='--', alpha=0.3)
+    ax.legend(loc='lower right', fontsize=10)
+    ax.spines['top'].set_visible(False)
+    ax.spines['right'].set_visible(False)
+
+    plt.tight_layout()
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, 'roc_all_models.png')
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"ROC comparison chart saved to: {out_path}")
+
 
 if __name__ == "__main__":
     pass
