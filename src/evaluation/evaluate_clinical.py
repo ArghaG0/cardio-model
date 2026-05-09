@@ -150,6 +150,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
 
     _plot_results(avg_metrics, output_dir)
     _plot_cardiostack_spider(avg_metrics, output_dir)
+    _plot_cardiostack_fold_progress(results, output_dir)
     return avg_metrics
 
 
@@ -217,6 +218,43 @@ def _plot_cardiostack_spider(avg_metrics, output_dir):
     plt.savefig(out_path, dpi=300, bbox_inches='tight')
     plt.close()
     print(f"\nSpider chart saved to: {out_path}")
+
+def _plot_cardiostack_fold_progress(results, output_dir):
+    if 'CardioStack' not in results:
+        return
+
+    folds = np.arange(1, len(results['CardioStack']['Accuracy']) + 1)
+    acc = results['CardioStack']['Accuracy']
+    f1 = results['CardioStack']['F1 Score']
+    prec = results['CardioStack']['Precision']
+    rec = results['CardioStack']['Recall']
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5))
+    fig.suptitle('CardioStack v2 — Cross-Validation Progress per Fold', fontsize=14, fontweight='bold', y=1.05)
+
+    ax1.plot(folds, f1, marker='o', color='#2b6cb0', linestyle='-', linewidth=2, label='F1 Score')
+    ax1.plot(folds, acc, marker='s', color='#38a169', linestyle='--', linewidth=2, label='Accuracy')
+    ax1.set_title('F1 & Accuracy', fontsize=13)
+    ax1.set_xlabel('CV Fold', fontsize=11)
+    ax1.set_xticks(folds)
+    ax1.grid(True, linestyle='-', alpha=0.4)
+    ax1.legend(loc='lower right')
+
+    ax2.plot(folds, prec, marker='o', color='#c53030', linestyle='-', linewidth=2, label='Precision')
+    ax2.plot(folds, rec, marker='s', color='#d69e2e', linestyle='--', linewidth=2, label='Recall')
+    ax2.set_title('Precision & Recall', fontsize=13)
+    ax2.set_xlabel('CV Fold', fontsize=11)
+    ax2.set_xticks(folds)
+    ax2.grid(True, linestyle='-', alpha=0.4)
+    ax2.legend(loc='lower right')
+
+    plt.tight_layout()
+    
+    os.makedirs(output_dir, exist_ok=True)
+    out_path = os.path.join(output_dir, 'cardiostack_fold_progress.png')
+    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    print(f"Fold progress chart saved to: {out_path}")
 
 if __name__ == "__main__":
     pass
