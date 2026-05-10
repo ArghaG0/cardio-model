@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.patches as mpatches
 import os
 from sklearn.model_selection import StratifiedKFold
 from sklearn.preprocessing import StandardScaler
@@ -19,7 +20,7 @@ from xgboost import XGBClassifier
 
 def _build_cardiostack():
     """
-    CardioStack v2 — RF + XGBoost + ExtraTrees → Logistic Regression meta
+    CardioStack v2 — RF + XGBoost + ExtraTrees -> Logistic Regression meta
 
     Why these three base learners?
       - RandomForest    : bagging — reduces variance, robust to noise
@@ -42,40 +43,17 @@ def _build_cardiostack():
       F1 Score  : 92.07%
     """
     rf = RandomForestClassifier(
-        n_estimators=100,
-        max_depth=8,
-        random_state=42,
-        n_jobs=1
-    )
+        n_estimators=100, max_depth=8, random_state=42, n_jobs=1)
     xgb = XGBClassifier(
-        eval_metric='logloss',
-        max_depth=4,
-        learning_rate=0.05,
-        n_estimators=150,
-        subsample=0.75,
-        colsample_bytree=0.6,
-        random_state=42,
-        verbosity=0,
-        n_jobs=1
-    )
+        eval_metric='logloss', max_depth=4, learning_rate=0.05,
+        n_estimators=150, subsample=0.75, colsample_bytree=0.6,
+        random_state=42, verbosity=0, n_jobs=1)
     et = ExtraTreesClassifier(
-        n_estimators=100,
-        max_depth=8,
-        random_state=99,
-        n_jobs=1
-    )
+        n_estimators=100, max_depth=8, random_state=99, n_jobs=1)
     meta = LogisticRegression(C=0.5, max_iter=1000)
-
     return StackingClassifier(
-        estimators=[
-            ('RandomForest',  rf),
-            ('XGBoost',       xgb),
-            ('ExtraTrees',    et),
-        ],
-        final_estimator=meta,
-        cv=3,
-        n_jobs=1
-    )
+        estimators=[('RandomForest', rf), ('XGBoost', xgb), ('ExtraTrees', et)],
+        final_estimator=meta, cv=3, n_jobs=1)
 
 
 def _build_ensemble():
@@ -124,8 +102,6 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
 
     results = {name: {'Accuracy': [], 'Precision': [], 'Recall': [], 'F1 Score': []}
                for name in model_names}
-
-    # Store per-fold ROC data for every model so we can plot all curves
     roc_data = {name: {'fpr': [], 'tpr': [], 'auc': []} for name in model_names}
 
     for fold, (train_idx, test_idx) in enumerate(skf.split(X, y)):
@@ -138,20 +114,18 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
             X_tr = scaler.fit_transform(X_train)
             X_te = scaler.transform(X_test)
             model.fit(X_tr, y_train)
-            y_pred      = model.predict(X_te)
-            y_prob      = model.predict_proba(X_te)[:, 1]   # positive-class probability
+            y_pred = model.predict(X_te)
+            y_prob = model.predict_proba(X_te)[:, 1]
 
             results[name]['Accuracy'].append(accuracy_score(y_test, y_pred) * 100)
             results[name]['Precision'].append(precision_score(y_test, y_pred, zero_division=0) * 100)
             results[name]['Recall'].append(recall_score(y_test, y_pred, zero_division=0) * 100)
             results[name]['F1 Score'].append(f1_score(y_test, y_pred, zero_division=0) * 100)
 
-            # ROC per fold
             fpr, tpr, _ = roc_curve(y_test, y_prob)
-            fold_auc     = auc(fpr, tpr)
             roc_data[name]['fpr'].append(fpr)
             roc_data[name]['tpr'].append(tpr)
-            roc_data[name]['auc'].append(fold_auc)
+            roc_data[name]['auc'].append(auc(fpr, tpr))
 
     avg_metrics = {
         name: {metric: np.mean(vals) for metric, vals in m.items()}
@@ -175,7 +149,7 @@ def evaluate_clinical_kfold(features_path, labels_path, output_dir, splits=5):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Chart 1 — Bar comparison (all 6 models, unchanged)
+# Chart 1 — Bar comparison (all 6 models)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _plot_results(avg_metrics, output_dir):
@@ -217,61 +191,117 @@ def _plot_results(avg_metrics, output_dir):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Chart 2 — Spider chart for CardioStack (your version, unchanged)
+# Chart 2 — Spider chart (FIXED)
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _plot_cardiostack_spider(avg_metrics, output_dir):
-    labels = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
-    num_vars = len(labels)
+    """
+    Fixed spider chart:
+      - Ring percentage labels placed at a fixed top-right angle, away from polygon
+      - Exact metric value annotated at each axis tip, offset outward
+      - Custom per-axis offset to prevent label overlap with axis name text
+      - Legend placed inside lower-right, no clipping
+    """
+    labels      = ['Accuracy', 'Precision', 'Recall', 'F1 Score']
+    num_vars    = len(labels)
+    angles      = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
+    angles     += angles[:1]
 
-    angles = np.linspace(0, 2 * np.pi, num_vars, endpoint=False).tolist()
-    angles += angles[:1]
+    values      = [avg_metrics["CardioStack"][m] for m in labels]
+    values     += values[:1]
 
     fig, ax = plt.subplots(figsize=(8, 8), subplot_kw=dict(polar=True))
+    fig.patch.set_facecolor('white')
+    ax.set_facecolor('#f8f9fa')
 
-    if "CardioStack" in avg_metrics:
-        values = [avg_metrics["CardioStack"][m] for m in labels]
-        values += values[:1]
+    # ── Reference rings ───────────────────────────────────────────────────────
+    for rv in [75, 80, 85, 90, 95, 100]:
+        ax.plot(angles, [rv] * (num_vars + 1),
+                color='#cccccc', linewidth=0.7, linestyle='--', zorder=1)
+        # Fixed top-right angle so labels never overlap the polygon
+        ax.text(np.radians(22), rv + 0.3, f'{rv}%',
+                ha='left', va='bottom', fontsize=8,
+                color='#888888', zorder=6)
 
-        ax.plot(angles, values, color='#e74c3c', linewidth=2,
-                linestyle='solid', label='CardioStack')
-        ax.fill(angles, values, color='#e74c3c', alpha=0.2)
+    # ── Axis spokes ───────────────────────────────────────────────────────────
+    for angle in angles[:-1]:
+        ax.plot([angle, angle], [70, 100],
+                color='#cccccc', linewidth=0.8, zorder=1)
 
+    # ── Polygon ───────────────────────────────────────────────────────────────
+    ax.plot(angles, values, color='#e74c3c',
+            linewidth=2.5, linestyle='solid', zorder=3)
+    ax.fill(angles, values, color='#e74c3c', alpha=0.18, zorder=2)
+    ax.scatter(angles[:-1], values[:-1],
+               color='#e74c3c', s=80, zorder=5,
+               edgecolors='white', linewidths=1.5)
+
+    # ── Value annotations — per-axis offset to avoid axis label collision ──────
+    # Angles (degrees from top, clockwise): Accuracy=0, Precision=90, Recall=180, F1=270
+    # Use (dx, dy) in data-coords for fine control
+    annotation_offsets = [
+        2.8,   # Accuracy  — top: push further up
+        3.5,   # Precision — right: needs extra room away from "Precision" label
+        2.8,   # Recall    — bottom: push further down
+        3.5,   # F1 Score  — left: needs extra room away from "F1 Score" label
+    ]
+    for angle, value, offset in zip(angles[:-1], values[:-1], annotation_offsets):
+        ax.annotate(
+            f'{value:.2f}%',
+            xy=(angle, value),
+            xytext=(angle, value + offset),
+            ha='center', va='center',
+            fontsize=10, fontweight='bold',
+            color='#c0392b', zorder=6
+        )
+
+    # ── Axis labels ───────────────────────────────────────────────────────────
     ax.set_theta_offset(np.pi / 2)
     ax.set_theta_direction(-1)
     ax.set_thetagrids(np.degrees(angles[:-1]), labels,
-                      fontsize=12, fontweight='bold')
+                      fontsize=13, fontweight='bold', color='#1a1a1a')
+    ax.tick_params(axis='x', pad=18)   # push axis labels further out from polygon
+
     ax.set_ylim(70, 100)
+    ax.set_yticklabels([])
+    ax.spines['polar'].set_visible(False)
 
-    plt.title('CardioStack Performance Signature',
-              size=15, fontweight='bold', y=1.1)
+    # ── Title & legend ────────────────────────────────────────────────────────
+    ax.set_title(
+        'CardioStack Performance Signature\n'
+        'RF + XGBoost + ExtraTrees \u2192 LR meta  |  5-Fold CV  |  1,214 patients',
+        size=12, fontweight='bold', pad=30,
+        color='#1a1a1a', linespacing=1.6
+    )
+    legend_patch = mpatches.Patch(
+        facecolor='#e74c3c', alpha=0.3,
+        edgecolor='#e74c3c', label='CardioStack v2'
+    )
+    ax.legend(handles=[legend_patch], loc='lower right',
+              bbox_to_anchor=(1.15, -0.05),
+              fontsize=10, framealpha=0.8)
 
+    plt.tight_layout()
     os.makedirs(output_dir, exist_ok=True)
     out_path = os.path.join(output_dir, 'cardiostack_spider_chart.png')
-    plt.savefig(out_path, dpi=300, bbox_inches='tight')
+    plt.savefig(out_path, dpi=300, bbox_inches='tight', facecolor='white')
     plt.close()
     print(f"Spider chart saved to: {out_path}")
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Chart 3 — Fold progress + ROC/AUC per fold (your chart extended)
+# Chart 3 — Fold progress + ROC per fold
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _plot_cardiostack_fold_progress(results, roc_data, output_dir):
-    """
-    3-panel figure for CardioStack:
-      Panel 1 — F1 & Accuracy per fold
-      Panel 2 — Precision & Recall per fold
-      Panel 3 — ROC curve per fold with mean AUC (NEW)
-    """
     if 'CardioStack' not in results:
         return
 
     folds = np.arange(1, len(results['CardioStack']['Accuracy']) + 1)
-    acc  = results['CardioStack']['Accuracy']
-    f1   = results['CardioStack']['F1 Score']
-    prec = results['CardioStack']['Precision']
-    rec  = results['CardioStack']['Recall']
+    acc   = results['CardioStack']['Accuracy']
+    f1    = results['CardioStack']['F1 Score']
+    prec  = results['CardioStack']['Precision']
+    rec   = results['CardioStack']['Recall']
 
     cs_fpr  = roc_data['CardioStack']['fpr']
     cs_tpr  = roc_data['CardioStack']['tpr']
@@ -305,30 +335,23 @@ def _plot_cardiostack_fold_progress(results, roc_data, output_dir):
     ax2.grid(True, linestyle='--', alpha=0.4)
     ax2.legend(loc='lower right')
 
-    # Panel 3: ROC curves per fold (NEW)
+    # Panel 3: ROC per fold
     fold_colors = ['#3182ce', '#e53e3e', '#38a169', '#d69e2e', '#805ad5']
     for i, (fpr, tpr, fold_auc) in enumerate(zip(cs_fpr, cs_tpr, cs_aucs)):
-        ax3.plot(fpr, tpr,
-                 color=fold_colors[i % len(fold_colors)],
+        ax3.plot(fpr, tpr, color=fold_colors[i % len(fold_colors)],
                  linewidth=1.6, alpha=0.75,
                  label=f'Fold {i+1}  AUC = {fold_auc:.3f}')
 
-    # Mean ROC — interpolate all fold curves onto a common FPR grid
-    mean_fpr = np.linspace(0, 1, 300)
-    interp_tprs = [np.interp(mean_fpr, fpr, tpr)
-                   for fpr, tpr in zip(cs_fpr, cs_tpr)]
-    mean_tpr = np.mean(interp_tprs, axis=0)
-    mean_tpr[0] = 0.0        # anchor at origin
-    mean_tpr[-1] = 1.0       # anchor at top-right
-    mean_auc = np.mean(cs_aucs)
+    mean_fpr   = np.linspace(0, 1, 300)
+    interp_tprs = [np.interp(mean_fpr, fpr, tpr) for fpr, tpr in zip(cs_fpr, cs_tpr)]
+    mean_tpr    = np.mean(interp_tprs, axis=0)
+    mean_tpr[0] = 0.0
+    mean_tpr[-1]= 1.0
+    mean_auc    = np.mean(cs_aucs)
 
-    ax3.plot(mean_fpr, mean_tpr,
-             color='#1a1a2e', linewidth=2.5, linestyle='--',
+    ax3.plot(mean_fpr, mean_tpr, color='#1a1a2e', linewidth=2.5, linestyle='--',
              label=f'Mean AUC = {mean_auc:.3f}')
-
-    # Diagonal chance line
-    ax3.plot([0, 1], [0, 1],
-             color='#999999', linewidth=1, linestyle=':',
+    ax3.plot([0, 1], [0, 1], color='#999999', linewidth=1, linestyle=':',
              label='Random (AUC = 0.500)')
 
     ax3.set_title('ROC Curve per Fold', fontsize=13)
@@ -348,16 +371,10 @@ def _plot_cardiostack_fold_progress(results, roc_data, output_dir):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Chart 4 — ROC/AUC comparison across ALL 6 models (bonus)
+# Chart 4 — ROC comparison across all 6 models
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _plot_roc_all_models(roc_data, output_dir):
-    """
-    Single ROC plot showing the mean ROC curve (across 5 folds) for every
-    model, so you can visually compare their discrimination ability.
-    AUC is a single number summarising the whole ROC curve —
-    1.0 = perfect, 0.5 = random guessing.
-    """
     model_colors = {
         'RandomForest': '#38a169',
         'XGBoost':      '#3182ce',
@@ -368,7 +385,7 @@ def _plot_roc_all_models(roc_data, output_dir):
     }
 
     mean_fpr = np.linspace(0, 1, 300)
-    fig, ax = plt.subplots(figsize=(9, 7))
+    fig, ax  = plt.subplots(figsize=(9, 7))
 
     for name, data in roc_data.items():
         interp_tprs = [np.interp(mean_fpr, fpr, tpr)
@@ -386,12 +403,10 @@ def _plot_roc_all_models(roc_data, output_dir):
                 linewidth=lw, linestyle=ls,
                 label=f'{name}  (AUC = {mean_auc:.3f})')
 
-    # Chance line
-    ax.plot([0, 1], [0, 1],
-            color='#aaaaaa', linewidth=1, linestyle=':',
-            label='Random  (AUC = 0.500)')
+    ax.plot([0, 1], [0, 1], color='#aaaaaa', linewidth=1,
+            linestyle=':', label='Random  (AUC = 0.500)')
 
-    ax.set_xlabel('False Positive Rate (1 − Specificity)', fontsize=12)
+    ax.set_xlabel('False Positive Rate (1 - Specificity)', fontsize=12)
     ax.set_ylabel('True Positive Rate (Sensitivity / Recall)', fontsize=12)
     ax.set_title('ROC Curve Comparison — All Models\n'
                  '5-Fold CV Mean  |  Clinical + Cleveland  |  1,214 patients',
