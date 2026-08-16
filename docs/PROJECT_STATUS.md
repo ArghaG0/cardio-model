@@ -9,9 +9,9 @@
 ## 2. Current Status
 - **Current lifecycle phase:** Transitioning from legacy scripts to Phase 2 of a mature ML lifecycle.
 - **Overall project maturity:** [IN PROGRESS] Transitioning from a prototype to a formalized, leakage-free MLOps architecture.
-- **What is complete:** [COMPLETE] Phase 1, Phase 2, Phase 3, Phase 4, Phase 5, Phase 6, Phase 7, Phase 8 (Testing & Documentation).
-- **What is currently being worked on:** [COMPLETE] Project is fully delivered and formalized.
-- **Immediate next step:** [MAINTENANCE] Recommend removing obsolete scripts and deploying the inference engine.
+- **What is complete:** [COMPLETED IMPLEMENTATION] Phases 1–8 are officially closed. The core ML lifecycle is fully engineered and validated.
+- **What is currently being worked on:** [POST-COMPLETION MAINTENANCE] Final audit, documentation reconciliation, and environment locking.
+- **Immediate next step:** None. The core project is finished. Any new objectives belong in FUTURE WORK.
 
 ## 3. Current Architecture
 The current state contains a mix of newly created architectural files and legacy scripts.
@@ -178,10 +178,15 @@ Handles model versioning, promotion, rollback, tracking evaluation metadata, and
 - **Test size:** `0.20`
 - **Validation Results:** Executed canonical dataset split with `py validate_phase1.py`. Confirmed exactly 917 valid records with 0 train/test overlap and identical reproducibility. All 7 validation scripts (`validate_phase1.py` through `validate_phase7.py`) have been confirmed to pass synchronously with exactly 0 runtime errors.
 
-## 17. Current Next Action
-Implement cleanup protocols. Remove legacy files identified during the Phase 8 audit, and rebuild `requirements.txt`.
+## 17. FUTURE WORK / TECHNICAL DEBT
+The following are NOT active implementation phases. They represent post-completion opportunities for future sprints:
+- **API Service Integration:** Wrapping `run_production.py` in a web framework (FastAPI/Flask) for network deployment.
+- **Data Drift Detection:** Automated statistical thresholding to detect shifts in real-world inference payloads vs `train.csv`.
+- **Dependency/Version Locking:** Adopting an exact package lockfile mechanism (e.g., pip-tools, Poetry) over raw `requirements.txt`.
+- **Legacy Cleanup:** Permanently removing obsolete entry point scripts and training modules from the old architecture to reduce repository clutter.
 
 ## 18. Change Log
+- **2026-08-16:** Final Audit complete. Verified via runtime execution that the repository matches the documented production state. `registry.json` is perfectly clean with active `v1`. Validation scripts 1–7 continue to pass natively. `requirements.txt` sanitized to the 5 exact ML dependencies.
 - **2026-08-16:** Phase 8 complete. Executed all 7 integration validation scripts (`py validate_phaseX.py`), categorised obsolete legacy modules, identified missing `xgboost` package in `requirements.txt`, verified CardioStack architecture, verified test-set leakage isolation, and successfully closed the migration lifecycle.
 - **2026-08-16:** Phase 7 complete. Implemented full rollback, registry validation, and dynamic caching reload mechanics. Validations guarantee missing/corrupted models cannot be promoted, and the production cache instantly detects registry changes during rollback without requiring process restart.
 - **2026-08-16:** Phase 6 complete. Created pure-inference production pipeline `src/production/inference.py` wrapped by strict schema validation (`src/production/input_schema.py`) that strictly denies target variables.
