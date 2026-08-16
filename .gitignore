@@ -1,16 +1,27 @@
 # Python Bytecode
 __pycache__/
-*.pyc
+*.py[cod]
+*$py.class
 
 # Environment Secrets
 .env
+.env.*
 
 # Datasets (Too large for GitHub)
 data/
 
-# Serialized Models (Too large for GitHub)
+# Serialized Models / ML Artifacts
 models/*.pkl
 models/*.pth
+registry/artifacts/*.pkl
+registry/artifacts/*.joblib
 
-#Graphs and Plots
+# Graphs and Plots
 reports/
+
+# IDE / Editor
+.vscode/
+
+# OS Files
+.DS_Store
+Thumbs.db
