@@ -23,12 +23,9 @@ The current state contains a mix of newly created architectural files and legacy
 - `registry/registry.json`: Active JSON registry for versioning.
 - `data/splits/train.csv` & `data/splits/test.csv`: Active datasets for development and final holdout.
 
-**Legacy (Planned for replacement/archiving):**
-- `main.py`, `clinicalmain.py`, `xgboostmain.py`: Legacy entry points. Duplicate pipelines.
-- `src/preprocessing/data_preprocessing.py` & `preprocess_clinical.py`: Legacy global preprocessing. Tainted by data leakage.
-- `src/training/train_advanced.py` & `train_clinical_kfold.py`: Legacy training scripts.
-- `src/models/cardiostack.py`: Legacy CardioStack v1.
-- `models/*.pkl`: Tainted artifacts containing data leakage. To be archived.
+**Legacy (Archived):**
+- Obsolete entry point scripts (`main.py`, `clinicalmain.py`, `xgboostmain.py`) and older models/training/evaluation/inference/preprocessing scripts have been formally archived into `archive/legacy/` and are no longer part of the active MLOps architecture.
+- `models/*.pkl`: Tainted artifacts containing data leakage. These were NOT archived during the current organizational cleanup, remain untouched, and are candidates for a separate future cleanup operation.
 
 ## 4. Dataset
 - **Canonical dataset:** `data/heart.csv`

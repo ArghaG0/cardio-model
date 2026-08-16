@@ -39,4 +39,4 @@ The following items are outside the scope of the core implementation plan but ar
 - **API Service Integration:** Wrap `run_production.py` inside a FastAPI/Flask service layer to expose the JSON inference logic securely over HTTP.
 - **Data Drift Detection:** Implement statistical divergence checks in the pipeline to flag when live inference payloads meaningfully drift from `train.csv` feature distributions.
 - **Dependency/Version Locking:** Migrate from a raw `requirements.txt` to a hardened lockfile solution (e.g., Poetry, pip-tools) for exact reproducible environment builds.
-- **Legacy Code Cleanup:** Permanently archive or delete the obsolete training scripts and duplicated data-loading modules (`main.py`, `clinicalmain.py`, `src/training/*`, etc.) to reduce repository debt.
+- **Legacy Code Cleanup:** Obsolete training scripts and duplicated data-loading modules (`main.py`, `clinicalmain.py`, `src/training/*`, etc.) have been moved to `archive/legacy/`. Future work involves permanently deleting these along with outdated `models/*.pkl` artifacts to completely remove repository debt.
