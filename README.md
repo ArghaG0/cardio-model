@@ -86,7 +86,7 @@ py run_production.py
 
 ## 9. Model Registry
 The registry system governs model deployment and traceability.
-*   **`registry/registry.json`:** The single source of truth tracking historical evaluations, versioning (`v1`, `v2`, etc.), promotion status, and the `active_version`.
+*   **`registry/registry.json`:** The single source of truth tracking historical evaluations, versioning (`v1`, `v2`, etc.), complete environment metadata capture (Python/sklearn/XGBoost/pandas/numpy versions), promotion status, and the `active_version`.
 *   **`registry/artifacts/`:** Local storage for versioned model artifacts referenced by the registry.
 *   **Rollback:** Previously promoted model versions can be restored by changing the registry's active_version; the production inference layer detects the version change and reloads the corresponding artifact.
 
@@ -110,8 +110,8 @@ The project includes a suite of integration validations that test the architectu
 *   `py validate_phase3.py`: Validates the CardioStack v2 StackingClassifier architecture and its isolation capabilities.
 *   `py validate_phase4.py`: Verifies that the Stratified CV development pipeline correctly ranks models without touching the test set.
 *   `py validate_phase5.py`: Validates the Champion/Challenger promotion lifecycle and quality gate enforcement on holdout data.
-*   `py validate_phase6.py`: Verifies production inference safely rejects illegal schemas (like target variables) and executes clean predictions.
-*   `py validate_phase7.py`: Verifies the registry successfully validates corrupted artifacts, maintains historical metadata, executes rollbacks, and triggers dynamic cache reloads in production.
+*   `py validate_phase6.py`: Verifies production inference safely rejects illegal schemas (like target variables) and executes clean predictions against the dynamically read `active_version`.
+*   `py validate_phase7.py`: Verifies the registry successfully validates corrupted artifacts, maintains historical metadata, executes rollbacks, and triggers dynamic cache reloads in production against the dynamically read `active_version`.
 
 ## 12. Project Structure
 The repository strictly divides the active MLOps engine from archived experimental work:
@@ -144,13 +144,15 @@ patients/
 
 ## 13. Current Production State
 *(Verified internal evaluation state. Not a clinical claim).*
-*   **Active Model:** `v1` (CardioStack v2)
+*   **Active Model:** `v2` (CardioStack v2) under scikit-learn 1.9.0 / XGBoost 3.4.1
+*   **Promotion Method:** Explicit override to resolve environment version mismatch. (`v1` retained as a legacy artifact). See `CHANGELOG.md` for full justification and history.
 *   **Holdout Recall:** 0.9020
 *   **Holdout F1 Score:** 0.8932
 *   **Holdout ROC-AUC:** 0.9326
 
 ## 14. Documentation Guide
 *   **`README.md`**: Project overview, architecture summary, and command usage.
+*   **`CHANGELOG.md`**: The canonical historical record of all project changes and decisions.
 *   **`docs/PROJECT_STATUS.md`**: The objective source of truth for the *currently verified repository state*.
 *   **`docs/IMPLEMENTATION_PLAN.md`**: The authoritative guide outlining the *intended architecture, engineering rules, and technical debt*.
 

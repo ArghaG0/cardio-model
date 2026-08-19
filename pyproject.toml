@@ -7,8 +7,13 @@ authors = [
     { name = "ArghaG0", email = "nitaig593@gmail.com" }
 ]
 requires-python = ">=3.13"
-dependencies = []
-
+dependencies = [
+    "joblib>=1.5.3",
+    "numpy>=2.5.2",
+    "pandas>=3.0.5",
+    "scikit-learn>=1.9.0",
+    "xgboost>=3.4.1"
+]
 [project.scripts]
 patients = "patients:main"
 

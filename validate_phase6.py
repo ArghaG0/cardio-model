@@ -10,10 +10,10 @@ print("--- Phase 6 Validation Script ---")
 # 1 & 2. Registry active model and load logic
 registry = ModelRegistry()
 active_v = registry.get_active_version()
-if active_v != "v1":
-    print(f"FAILED: Expected active version v1, got {active_v}")
+if not active_v:
+    print("FAILED: No active version found in registry")
     exit(1)
-print("1. Confirmed Registry identifies v1 as the active model.")
+print(f"1. Confirmed Registry identifies {active_v} as the active model.")
 
 # 3 & 4 & 13. Artifact loading and completeness
 try:

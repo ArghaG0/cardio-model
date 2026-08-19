@@ -20,7 +20,7 @@ The current state contains a mix of newly created architectural files and legacy
 - `src/config/config.py`: Defines immutable project paths, splits ratio (0.20), and random state (42).
 - `src/data/dataset.py`: Defines the single canonical data pipeline. Loads `heart.csv` exclusively and writes isolated splits.
 - `src/registry/model_registry.py`: Defines `ModelRegistry` class for JSON-based tracking.
-- `registry/registry.json`: Active JSON registry for versioning.
+- `registry/registry.json`: Active JSON registry for versioning. Now captures complete environment metadata (Python/sklearn/XGBoost/pandas/numpy versions) at registration time.
 - `data/splits/train.csv` & `data/splits/test.csv`: Active datasets for development and final holdout.
 
 **Legacy (Archived):**
@@ -119,16 +119,9 @@ Recall is particularly important for this project because false negatives are hi
 *(Note: Do NOT claim that a particular metric threshold has been clinically validated).*
 
 ## 11. Model Registry
-**Current state:**
-`registry/registry.json`
-```json
-{
-    "active_version": null,
-    "models": {}
-}
-```
 **Intended future role:**
-Handles model versioning, promotion, rollback, tracking evaluation metadata, and pointing to the active champion artifact.
+Handles model versioning, promotion, rollback, tracking evaluation metadata, and pointing to the active champion artifact. 
+*Note: The registry intentionally logs challenger metadata immediately upon evaluation to assign a monotonic version number, but only serializes the `.pkl` artifact if the model is subsequently promoted. Therefore, it is a valid and expected state for `registry.json` to contain entries (marked `rejected`) without corresponding `.pkl` files in `registry/artifacts/`.*
 
 ## 12. Completed Work
 - [x] Phase 1 infrastructure
@@ -163,9 +156,11 @@ Handles model versioning, promotion, rollback, tracking evaluation metadata, and
 - **Test split:** `test.csv` (184 records - strictly holdout)
 
 ## 15. Active Model Details
-- **Current active model:** `v1` (CardioStack v2)
-- **Artifact path:** `registry/artifacts/model_v1.pkl`
+- **Current active model:** `v2` (CardioStack v2)
+- **Environment:** scikit-learn 1.9.0 / XGBoost 3.4.1
+- **Artifact path:** `registry/artifacts/model_v2.pkl` (`v1` retained as a legacy artifact)
 - **Promotion status:** `promoted`
+- **Promotion method:** Explicit override to resolve environment version mismatch. See `CHANGELOG.md` for full justification and history.
 - **Recall (Holdout):** 0.9020
 - **F1 (Holdout):** 0.8932
 - **ROC-AUC (Holdout):** 0.9326
@@ -173,7 +168,7 @@ Handles model versioning, promotion, rollback, tracking evaluation metadata, and
 ## 16. Reproducibility
 - **Seed:** `42`
 - **Test size:** `0.20`
-- **Validation Results:** Executed canonical dataset split with `py validate_phase1.py`. Confirmed exactly 917 valid records with 0 train/test overlap and identical reproducibility. All 7 validation scripts (`validate_phase1.py` through `validate_phase7.py`) have been confirmed to pass synchronously with exactly 0 runtime errors.
+- **Validation Results:** Executed canonical dataset split with `py validate_phase1.py`. Confirmed exactly 917 valid records with 0 train/test overlap and identical reproducibility. All 7 validation scripts (`validate_phase1.py` through `validate_phase7.py`) have been confirmed to pass synchronously with exactly 0 runtime errors against the `v2` artifact. `validate_phase6.py` and `validate_phase7.py` dynamically read `active_version` instead of hardcoding "v1".
 
 ## 17. FUTURE WORK / TECHNICAL DEBT
 The following are NOT active implementation phases. They represent post-completion opportunities for future sprints:
@@ -183,13 +178,4 @@ The following are NOT active implementation phases. They represent post-completi
 - **Legacy Cleanup:** Permanently removing obsolete entry point scripts and training modules from the old architecture to reduce repository clutter.
 
 ## 18. Change Log
-- **2026-08-16:** Final Audit complete. Verified via runtime execution that the repository matches the documented production state. `registry.json` is perfectly clean with active `v1`. Validation scripts 1–7 continue to pass natively. `requirements.txt` sanitized to the 5 exact ML dependencies.
-- **2026-08-16:** Phase 8 complete. Executed all 7 integration validation scripts (`py validate_phaseX.py`), categorised obsolete legacy modules, identified missing `xgboost` package in `requirements.txt`, verified CardioStack architecture, verified test-set leakage isolation, and successfully closed the migration lifecycle.
-- **2026-08-16:** Phase 7 complete. Implemented full rollback, registry validation, and dynamic caching reload mechanics. Validations guarantee missing/corrupted models cannot be promoted, and the production cache instantly detects registry changes during rollback without requiring process restart.
-- **2026-08-16:** Phase 6 complete. Created pure-inference production pipeline `src/production/inference.py` wrapped by strict schema validation (`src/production/input_schema.py`) that strictly denies target variables.
-- **2026-08-16:** Phase 5 complete. Implemented holdout evaluation and Champion/Challenger promotion lifecycle. `CardioStack v2` was bootstrapped as the initial Active Champion (`v1`) after successfully passing configurable quality gates on the untouched test set (Recall: 0.9020, F1: 0.8932, ROC-AUC: 0.9326). Artifact serialized natively as a single Pipeline.
-- **2026-08-16:** Phase 4 complete. Developed a 5-fold Stratified CV evaluation pipeline. `CardioStack v2` emerged as the highest-performing baseline model (Recall: 0.8938, F1: 0.8747, ROC-AUC: 0.9291).
-- **2026-08-16:** Environment/IDE validation complete. Created `.vscode/settings.json` to map Pylance diagnostics directly to the valid system Python 3.13.5 environment, resolving missing imports. Obsolete `use_label_encoder` parameter removed from XGBoost configurations.
-- **2026-08-16:** Phase 3 complete. Model architectures centralized into `model_factory.py`. CardioStack v2 correctly structured as an out-of-fold stacking ensemble.
-- **2026-08-16:** Phase 2 complete. Reusable Scikit-Learn `ColumnTransformer` preprocessing pipeline established.
-- **2026-08-16:** Phase 1 complete. Architecture formally transitioned from legacy scripts to isolated canonical data and `ModelRegistry`. Documentation standard established.
+Please see `CHANGELOG.md` in the project root for the canonical history going forward. Future updates will go there rather than accumulating in this document.

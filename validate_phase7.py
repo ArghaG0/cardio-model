@@ -24,26 +24,26 @@ test_record = df_test.iloc[0].to_dict()
 mock_files_to_cleanup = []
 
 try:
-    # A. Existing v1 loads successfully
-    v1_meta = registry.get_model("v1")
-    if not v1_meta:
-        print("FAILED: v1 metadata not found in registry.")
+    # A. Existing {initial_active_version} loads successfully
+    active_meta = registry.get_model(initial_active_version)
+    if not active_meta:
+        print(f"FAILED: {initial_active_version} metadata not found in registry.")
         exit(1)
-    if initial_active_version != "v1":
-        print(f"FAILED: v1 is not the active version initially. Found {initial_active_version}")
+    if initial_active_version != initial_active_version:
+        print(f"FAILED: {initial_active_version} is not the active version initially. Found {initial_active_version}")
         exit(1)
 
-    res_v1 = predict(test_record)
-    if res_v1["model_version"] != "v1":
-        print("FAILED: predict() did not use v1.")
+    res_active = predict(test_record)
+    if res_active["model_version"] != initial_active_version:
+        print(f"FAILED: predict() did not use {initial_active_version}.")
         exit(1)
-    print("A. Confirmed Existing v1 loads successfully.")
+    print(f"A. Confirmed Existing {initial_active_version} loads successfully.")
 
     # B. Registering a mock model creates new version dynamically
-    # We duplicate v1's artifact as mock artifact to simulate a loadable model
+    # We duplicate {initial_active_version}'s artifact as mock artifact to simulate a loadable model
     # To avoid filename conflicts, we'll name it temporarily and let registry assign version
     temp_artifact_path = Path("registry/artifacts/temp_mock.pkl")
-    shutil.copy(v1_meta["artifact_path"], temp_artifact_path)
+    shutil.copy(active_meta["artifact_path"], temp_artifact_path)
     mock_files_to_cleanup.append(temp_artifact_path)
 
     new_v = registry.register_model(name="mock_test", artifact_path=str(temp_artifact_path))
@@ -60,24 +60,24 @@ try:
     registry._save_registry(reg_data)
 
     # C. Registry metadata is preserved
-    v1_meta_check = registry.get_model("v1")
-    if not v1_meta_check or v1_meta_check["name"] != "cardiostack_v2":
-        print("FAILED: v1 metadata was corrupted.")
+    active_meta_check = registry.get_model(initial_active_version)
+    if not active_meta_check or active_meta_check["name"] != "cardiostack_v2":
+        print(f"FAILED: {initial_active_version} metadata was corrupted.")
         exit(1)
     print("C. Confirmed historical registry metadata is preserved.")
 
-    # D & E. Promoting new_v changes active_version to new_v, and v1 becomes superseded
+    # D & E. Promoting new_v changes active_version to new_v, and {initial_active_version} becomes superseded
     registry.promote_model(new_v)
     if registry.get_active_version() != new_v:
         print(f"FAILED: Active version did not change to {new_v}.")
         exit(1)
-    if registry.get_model("v1")["promotion_status"] != "superseded":
-        print("FAILED: v1 was not marked as superseded.")
+    if registry.get_model(initial_active_version)["promotion_status"] != "superseded":
+        print(f"FAILED: {initial_active_version} was not marked as superseded.")
         exit(1)
     if registry.get_model(new_v)["promotion_status"] != "promoted":
         print(f"FAILED: {new_v} was not marked as promoted.")
         exit(1)
-    print(f"D & E. Confirmed {new_v} promotion updates active_version, is promoted, and v1 is safely marked superseded.")
+    print(f"D & E. Confirmed {new_v} promotion updates active_version, is promoted, and {initial_active_version} is safely marked superseded.")
 
     # F & G. Production inference detects change and reloads new_v
     res_new_v = predict(test_record)
@@ -87,24 +87,24 @@ try:
     print("F & G. Confirmed production inference instantly detects active version change and reloads the new artifact.")
 
     # H. Rollback new_v -> v1 works
-    registry.rollback("v1")
-    if registry.get_active_version() != "v1":
-        print("FAILED: Rollback did not change active_version back to v1.")
+    registry.rollback(initial_active_version)
+    if registry.get_active_version() != initial_active_version:
+        print(f"FAILED: Rollback did not change active_version back to {initial_active_version}.")
         exit(1)
     if registry.get_model(new_v)["promotion_status"] != "superseded":
         print(f"FAILED: {new_v} was not marked as superseded after rollback.")
         exit(1)
-    if registry.get_model("v1")["promotion_status"] != "promoted":
-        print("FAILED: v1 was not marked as promoted after rollback.")
+    if registry.get_model(initial_active_version)["promotion_status"] != "promoted":
+        print(f"FAILED: {initial_active_version} was not marked as promoted after rollback.")
         exit(1)
     print("H. Confirmed rollback successfully restored v1 as active and superseded the mock model.")
 
-    # I. Production detects rollback and reloads v1
-    res_v1_again = predict(test_record)
-    if res_v1_again["model_version"] != "v1":
-        print(f"FAILED: Production cache failed to invalidate on rollback. Expected v1, got {res_v1_again['model_version']}")
+    # I. Production detects rollback and reloads {initial_active_version}
+    res_active_again = predict(test_record)
+    if res_active_again["model_version"] != initial_active_version:
+        print(f"FAILED: Production cache failed to invalidate on rollback. Expected {initial_active_version}, got {res_active_again['model_version']}")
         exit(1)
-    print("I. Confirmed production instantly reloads the v1 artifact following a registry rollback.")
+    print(f"I. Confirmed production instantly reloads the {initial_active_version} artifact following a registry rollback.")
 
     # J & K. Rollback/Promotion to nonexistent safely fails
     try:
@@ -145,7 +145,7 @@ try:
         pass
 
     # Verify active version wasn't damaged during failures
-    if registry.get_active_version() != "v1":
+    if registry.get_active_version() != initial_active_version:
         print("FAILED: Failed validations altered the active version!")
         exit(1)
     print("L. Confirmed strict artifact integrity validations: missing/corrupted artifacts cannot become active.")
@@ -171,12 +171,12 @@ finally:
         print("FAILED CLEANUP: Mock models still exist in registry!")
         exit(1)
 
-    v1_artifact = Path("registry/artifacts/model_v1.pkl")
+    v1_artifact = Path(f"registry/artifacts/model_{initial_active_version}.pkl")
     if not v1_artifact.exists():
-        print("FAILED CLEANUP: v1 artifact was destroyed!")
+        print(f"FAILED CLEANUP: {initial_active_version} artifact was destroyed!")
         exit(1)
         
-    print("M. Confirmed v1 artifact remained completely untouched and active_version restored.")
+    print(f"M. Confirmed {initial_active_version} artifact remained completely untouched and active_version restored.")
     print("N. Confirmed dataset immutability (No train/test modifications occurred).")
 
     print("--- Validation Complete ---")

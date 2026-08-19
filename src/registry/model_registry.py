@@ -74,11 +74,24 @@ class ModelRegistry:
         next_v_num = max(versions) + 1 if versions else 1
         new_version = f"v{next_v_num}"
         
+        import sys
+        import sklearn
+        import xgboost
+        import pandas
+        import numpy
+
         registry["models"][new_version] = {
             "name": name,
             "version": new_version,
             "artifact_path": str(artifact_path),
             "created_at": datetime.utcnow().isoformat() + "Z",
+            "environment": {
+                "python": sys.version.split()[0],
+                "scikit-learn": sklearn.__version__,
+                "xgboost": xgboost.__version__,
+                "pandas": pandas.__version__,
+                "numpy": numpy.__version__
+            },
             "cv_metrics": cv_metrics or {},
             "test_metrics": test_metrics or {},
             "gate_results": gate_results or {},
