@@ -8,14 +8,16 @@ authors = [
 ]
 requires-python = ">=3.13"
 dependencies = [
+    "fastapi>=0.141.1",
     "joblib>=1.5.3",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
+    "pydantic>=2.13.4",
     "scikit-learn>=1.9.0",
-    "xgboost>=3.4.1"
+    "uvicorn>=0.52.4",
+    "xgboost>=3.4.1",
 ]
-[project.scripts]
-patients = "patients:main"
+
 
 [build-system]
 requires = ["uv_build>=0.12.5,<0.13.0"]

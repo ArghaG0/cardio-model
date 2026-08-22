@@ -81,8 +81,14 @@ Command:
 ```bash
 py run_production.py
 ```
-**Function:** Provides simulated live inference. It securely queries the registry for the `active_version`, loads the specific native `model_vN.pkl` artifact into memory, validates the incoming raw patient payload against a strict schema, and returns a JSON response containing the binary prediction, calculated probability, and model metadata. 
+**Function:** Provides simulated live inference via a CLI. It securely queries the registry for the `active_version`, loads the specific native `model_vN.pkl` artifact into memory, validates the incoming raw patient payload against a strict schema, and returns a JSON response containing the binary prediction, calculated probability, and model metadata. 
 **Production is purely an inference consumer and never retrains or refits models.**
+
+## 8.1 API & Docker Container
+The production inference engine is wrapped in a **FastAPI** service for network-accessible HTTP JSON inference. 
+*   **Endpoints:** The active model is served via `POST /predict`, alongside `GET /health` and `GET /model/active`. See [docs/API.md](docs/API.md) for full endpoint documentation.
+*   **Containerization:** The API is packaged as a Docker container. The Docker image builds using the exact `uv` lockfile and runs safely with a non-root user. It includes a healthcheck and mounts the `registry/` directory as a read-only volume so that the container stays up-to-date with the host registry without write privileges.
+*   **CORS:** Cross-Origin Resource Sharing is environment-configurable (`CORS_ORIGINS`) and restrictive (empty list) by default.
 
 ## 9. Model Registry
 The registry system governs model deployment and traceability.
@@ -152,15 +158,15 @@ patients/
 
 ## 14. Documentation Guide
 *   **`README.md`**: Project overview, architecture summary, and command usage.
+*   **`docs/MODEL_CARD.md`**: The formal model card describing intended uses, limitations, and evaluation rationale.
 *   **`CHANGELOG.md`**: The canonical historical record of all project changes and decisions.
 *   **`docs/PROJECT_STATUS.md`**: The objective source of truth for the *currently verified repository state*.
 *   **`docs/IMPLEMENTATION_PLAN.md`**: The authoritative guide outlining the *intended architecture, engineering rules, and technical debt*.
 
 ## 15. Future Work / Technical Debt
-The core MLOps architecture (Phases 1–8) is complete. Future maintenance and scalability improvements include:
-*   **API Service Integration:** Wrapping `run_production.py` inside a FastAPI or Flask service for network-accessible HTTP JSON inference.
+The core MLOps architecture (Phases 1–8) and API containerization are complete. Future maintenance and scalability improvements include:
+*   **CI/CD & Hosting:** Implement automated CI/CD pipelines (e.g., GitHub Actions) and deploy the Docker container to a production hosting environment.
 *   **Data Drift Detection:** Implementing statistical divergence checks to flag when live production payloads meaningfully drift from `train.csv` distributions.
-*   **Dependency/Version Locking:** Migrating from a basic `requirements.txt` to a hardened lockfile solution (e.g., pip-tools, Poetry) for exactly reproducible builds.
 *   **Legacy Code Deletion:** Permanently removing the `archive/legacy/` experimental code and old tainted `models/*.pkl` artifacts to reduce repository footprint.
 
 ## 16. Core Design Principles

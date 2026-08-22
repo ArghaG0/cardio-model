@@ -1,0 +1,114 @@
+import os
+from contextlib import asynccontextmanager
+from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import APIKeyHeader
+from typing import List, Union
+
+from src.api.schema import PatientInput, PredictionResult
+from src.production.inference import predict, _load_model_if_needed, get_active_version
+from src.registry.model_registry import ModelRegistry
+
+# Configurable CORS via environment variables. Defaults to empty/restrictive if unset.
+CORS_ORIGINS_STR = os.getenv("CORS_ORIGINS", "")
+CORS_ORIGINS = [origin.strip() for origin in CORS_ORIGINS_STR.split(",")] if CORS_ORIGINS_STR else []
+
+# API Key Authentication
+API_KEY = os.getenv("API_KEY")
+api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
+
+def verify_api_key(api_key: str = Depends(api_key_header)):
+    if API_KEY:
+        if api_key != API_KEY:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or missing X-API-Key header",
+            )
+    return api_key
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """
+    Lifecycle hook for the FastAPI application.
+    Executes exactly once on startup to fail-fast if the active model cannot be loaded.
+    """
+    try:
+        _load_model_if_needed()
+        print("Successfully loaded active model on startup.")
+    except Exception as e:
+        print(f"CRITICAL: Failed to load active model during startup: {e}")
+        raise RuntimeError("Startup failed due to model load error") from e
+    
+    yield
+
+app = FastAPI(
+    title="CardioStack Inference API",
+    description="API for cardiovascular disease prediction",
+    version="1.0.0",
+    lifespan=lifespan
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=CORS_ORIGINS,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+@app.get("/health")
+def health_check():
+    """
+    Liveness probe. 
+    Verifies the API is up and returns the globally cached active version.
+    """
+    return {"status": "healthy", "active_version": get_active_version()}
+
+@app.get("/model/active", dependencies=[Depends(verify_api_key)])
+def get_active_model_info():
+    """
+    Returns the metadata for the currently active production model from the registry.
+    """
+    try:
+        registry = ModelRegistry()
+        active = registry.get_active_version()
+        if not active:
+            raise HTTPException(status_code=503, detail="No active model configured")
+        
+        meta = registry.get_model(active)
+        if not meta:
+            raise HTTPException(status_code=503, detail="Active model metadata missing")
+            
+        # Hide raw host filesystem path in API response
+        if "artifact_path" in meta:
+            from pathlib import Path
+            raw_path = meta["artifact_path"].replace("\\", "/")
+            meta["artifact_path"] = Path(raw_path).name
+            
+        return meta
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/predict", response_model=Union[PredictionResult, List[PredictionResult]])
+def predict_endpoint(patient: Union[PatientInput, List[PatientInput]], _ = Depends(verify_api_key)):
+    """
+    Executes inference against the active model.
+    Pydantic automatically validates the schema and returns 422 if invalid.
+    Supports both single patient predictions and batch predictions.
+    """
+    try:
+        # Convert Pydantic model to dictionary for our existing inference pipeline
+        if isinstance(patient, list):
+            raw_data = [p.model_dump() for p in patient]
+        else:
+            raw_data = patient.model_dump()
+            
+        result = predict(raw_data)
+        return result
+    except RuntimeError as e:
+        # e.g., Model fails to load or prediction fails internally
+        raise HTTPException(status_code=503, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail="Internal server error")

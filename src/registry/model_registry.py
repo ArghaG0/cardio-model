@@ -52,7 +52,11 @@ class ModelRegistry:
         if not model_meta:
             raise ValueError(f"Metadata for active version {active_version} not found.")
             
-        artifact_path = Path(model_meta.get("artifact_path", ""))
+        # Dynamically resolve artifact path relative to registry dir for Docker portability
+        # The JSON might store a host-specific absolute path like D:\Projects\...
+        raw_path = model_meta.get("artifact_path", "").replace("\\", "/")
+        artifact_filename = Path(raw_path).name
+        artifact_path = self.registry_dir / "artifacts" / artifact_filename
         if not artifact_path.exists():
             raise FileNotFoundError(f"Model artifact not found at {artifact_path}")
             
@@ -112,7 +116,10 @@ class ModelRegistry:
             raise ValueError(f"Version {version} not found in registry.")
             
         model_meta = registry["models"][version]
-        artifact_path = Path(model_meta.get("artifact_path", ""))
+        # Dynamically resolve artifact path relative to registry dir for Docker portability
+        raw_path = model_meta.get("artifact_path", "").replace("\\", "/")
+        artifact_filename = Path(raw_path).name
+        artifact_path = self.registry_dir / "artifacts" / artifact_filename
         
         if not artifact_path.exists():
             raise FileNotFoundError(f"Model artifact not found at {artifact_path}")

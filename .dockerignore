@@ -1,0 +1,25 @@
+.git/
+.vscode/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ignore local datasets
+data/
+!data/splits/
+data/splits/*
+!data/splits/.gitkeep
+
+# Ignore legacy code
+archive/
+
+# Ignore metrics and results
+results/
+
+# Ignore local registry (this will be volume-mounted)
+registry/
+
+# Ignore scratch files
+scratch/

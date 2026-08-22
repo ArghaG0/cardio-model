@@ -1,0 +1,19 @@
+version: '3.8'
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: cardiostack-api:latest
+    ports:
+      - "${PORT:-8000}:${PORT:-8000}"
+    environment:
+      - PORT=${PORT:-8000}
+      - HOST=${HOST:-0.0.0.0}
+      - CORS_ORIGINS=${CORS_ORIGINS:-}
+      - API_KEY=${API_KEY}
+    volumes:
+      # Mount the local registry to the container so that
+      # new promotions immediately hot-reload the API cache
+      - ./registry:/app/registry:ro

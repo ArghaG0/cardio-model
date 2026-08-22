@@ -230,6 +230,85 @@
             },
             "promotion_status": "rejected",
             "decision_reason": "Challenger rejected: Tied/Lower metrics. Retaining Champion."
+        },
+        "v4": {
+            "name": "cardiostack_v2",
+            "version": "v4",
+            "artifact_path": "D:\\Projects\\patients\\registry\\artifacts\\model_v4.pkl",
+            "created_at": "2026-08-22T12:36:50.951679Z",
+            "environment": {
+                "python": "3.13.5",
+                "scikit-learn": "1.9.0",
+                "xgboost": "3.4.1",
+                "pandas": "3.0.5",
+                "numpy": "2.5.2"
+            },
+            "cv_metrics": {
+                "accuracy_mean": 0.858130649520082,
+                "accuracy_std": 0.018357682823724884,
+                "accuracy_folds": [
+                    0.8707482993197279,
+                    0.8231292517006803,
+                    0.8707482993197279,
+                    0.8561643835616438,
+                    0.8698630136986302
+                ],
+                "precision_mean": 0.8582554273899767,
+                "precision_std": 0.03666177872450365,
+                "precision_folds": [
+                    0.8780487804878049,
+                    0.7894736842105263,
+                    0.8974358974358975,
+                    0.8658536585365854,
+                    0.8604651162790697
+                ],
+                "recall_mean": 0.893827160493827,
+                "recall_std": 0.02289782344566841,
+                "recall_folds": [
+                    0.8888888888888888,
+                    0.9259259259259259,
+                    0.8641975308641975,
+                    0.8765432098765432,
+                    0.9135802469135802
+                ],
+                "f1_mean": 0.874720928766172,
+                "f1_std": 0.012315382493545893,
+                "f1_folds": [
+                    0.8834355828220859,
+                    0.8522727272727273,
+                    0.8805031446540881,
+                    0.8711656441717791,
+                    0.8862275449101796
+                ],
+                "roc_auc_mean": 0.9291288957955626,
+                "roc_auc_std": 0.015591924583791692,
+                "roc_auc_folds": [
+                    0.9294799850355405,
+                    0.8997381219603442,
+                    0.9446315001870558,
+                    0.9327635327635327,
+                    0.939031339031339
+                ]
+            },
+            "test_metrics": {
+                "accuracy": 0.8804347826086957,
+                "precision": 0.8846153846153846,
+                "recall": 0.9019607843137255,
+                "f1": 0.8932038834951457,
+                "roc_auc": 0.9325681492109039,
+                "tp": 92,
+                "tn": 70,
+                "fp": 12,
+                "fn": 10
+            },
+            "gate_results": {
+                "recall_passed": true,
+                "f1_passed": true,
+                "roc_auc_passed": true,
+                "overall_passed": true
+            },
+            "promotion_status": "rejected",
+            "decision_reason": "Challenger rejected: Tied/Lower metrics. Retaining Champion."
         }
     }
 }

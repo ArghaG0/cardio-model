@@ -7,11 +7,11 @@
 - **Distinction between development and production:** The project separates iterative model evaluation and selection (Development) from the final serving architecture for an approved model (Production).
 
 ## 2. Current Status
-- **Current lifecycle phase:** Transitioning from legacy scripts to Phase 2 of a mature ML lifecycle.
+- **Current lifecycle phase:** API Containerization Complete. Post-completion maintenance.
 - **Overall project maturity:** [IN PROGRESS] Transitioning from a prototype to a formalized, leakage-free MLOps architecture.
-- **What is complete:** [COMPLETED IMPLEMENTATION] Phases 1–8 are officially closed. The core ML lifecycle is fully engineered and validated.
+- **What is complete:** [COMPLETED IMPLEMENTATION] Phases 1–9 are officially closed. The core ML lifecycle and FastAPI/Docker serving layer are fully engineered and validated.
 - **What is currently being worked on:** [POST-COMPLETION MAINTENANCE] Final audit, documentation reconciliation, and environment locking.
-- **Immediate next step:** None. The core project is finished. Any new objectives belong in FUTURE WORK.
+- **Immediate next step:** CI/CD and deployment hosting decisions.
 
 ## 3. Current Architecture
 The current state contains a mix of newly created architectural files and legacy scripts.
@@ -106,6 +106,8 @@ Our intended production candidate is CardioStack v2 with Logistic Regression as 
 - Prediction probability
 - Class prediction
 - Rollback capability
+- **FastAPI HTTP Service:** Model dynamically served via `/predict`. See [docs/API.md](API.md) for details.
+- **Docker Containerized:** Configurable CORS, non-root user, strict read-only registry volume mount.
 
 ## 10. Model Evaluation Strategy
 **Planned metrics:**
@@ -135,7 +137,8 @@ Handles model versioning, promotion, rollback, tracking evaluation metadata, and
 - [x] Phase 5 promotion
 - [x] Phase 6 production
 - [x] Phase 7 rollback & registry
-- [ ] Phase 8 testing & docs
+- [x] Phase 8 testing & docs
+- [x] Phase 9 API & Docker containerization
 
 ## 13. Known Problems
 - All pre-existing `.pkl` artifacts in `models/` were trained on leaking datasets and cannot be trusted.
@@ -172,9 +175,9 @@ Handles model versioning, promotion, rollback, tracking evaluation metadata, and
 
 ## 17. FUTURE WORK / TECHNICAL DEBT
 The following are NOT active implementation phases. They represent post-completion opportunities for future sprints:
-- **API Service Integration:** Wrapping `run_production.py` in a web framework (FastAPI/Flask) for network deployment.
+- **CI/CD & Hosting:** Implement automated CI/CD pipelines (e.g., GitHub Actions) and deploy the Docker container to a production hosting environment.
+- **API Productionization:** Implement rate limiting, request tracing, structured logging pipelines, and API URL versioning once there is real hosted traffic to justify them.
 - **Data Drift Detection:** Automated statistical thresholding to detect shifts in real-world inference payloads vs `train.csv`.
-- **Dependency/Version Locking:** Adopting an exact package lockfile mechanism (e.g., pip-tools, Poetry) over raw `requirements.txt`.
 - **Legacy Cleanup:** Permanently removing obsolete entry point scripts and training modules from the old architecture to reduce repository clutter.
 
 ## 18. Change Log
