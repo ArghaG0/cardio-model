@@ -19,7 +19,7 @@ archive/
 results/
 
 # Ignore local registry (this will be volume-mounted)
-registry/
+
 
 # Ignore scratch files
 scratch/

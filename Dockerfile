@@ -18,6 +18,7 @@ RUN uv sync --frozen --no-dev --no-install-project
 
 # Copy application code
 COPY src/ ./src/
+COPY registry/ ./registry/
 
 # Change ownership of /app to the non-root user
 RUN chown -R appuser:appuser /app
