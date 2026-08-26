@@ -41,9 +41,28 @@ async def lifespan(app: FastAPI):
     
     yield
 
+API_DESCRIPTION = """
+**Cardiovascular disease risk prediction from clinical features.**
+
+---
+
+### <u>Model Details</u>
+* **Architecture:** A stacking ensemble comprising Random Forest, XGBoost, and ExtraTrees.
+* **Meta-Learner:** Logistic regression to optimally combine base learner predictions.
+* **Evaluation Methodology:** Strictly **recall-prioritized**. In a cardiovascular screening context, false negatives (failing to identify an at-risk patient) are significantly more costly and dangerous than false positives.
+
+---
+
+### ⚠️ <u>Clinical Disclaimer</u>
+This is a machine-learning research and engineering portfolio project. **It is NOT a clinically validated diagnostic tool.** It must not be used for actual medical diagnosis, treatment planning, or clinical triage.
+
+---
+*For complete evaluation metrics, limitations, and intended use cases, refer to `docs/MODEL_CARD.md` in the source repository.*
+"""
+
 app = FastAPI(
     title="CardioStack Inference API",
-    description="API for cardiovascular disease prediction",
+    description=API_DESCRIPTION,
     version="1.0.0",
     lifespan=lifespan
 )
@@ -56,19 +75,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/health")
+@app.get(
+    "/health",
+    summary="Liveness Probe",
+    description="Verifies the API is up and running. Returns the globally cached active version of the model to confirm cache integrity."
+)
 def health_check():
-    """
-    Liveness probe. 
-    Verifies the API is up and returns the globally cached active version.
-    """
     return {"status": "healthy", "active_version": get_active_version()}
 
-@app.get("/model/active", dependencies=[Depends(verify_api_key)])
+@app.get(
+    "/model/active", 
+    dependencies=[Depends(verify_api_key)],
+    summary="Get Active Model Metadata",
+    description="Returns the full metadata for the currently active production model from the ML registry (e.g., creation date, specific version, algorithm metrics)."
+)
 def get_active_model_info():
-    """
-    Returns the metadata for the currently active production model from the registry.
-    """
     try:
         registry = ModelRegistry()
         active = registry.get_active_version()
@@ -91,13 +112,13 @@ def get_active_model_info():
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@app.post("/predict", response_model=Union[PredictionResult, List[PredictionResult]])
+@app.post(
+    "/predict", 
+    response_model=Union[PredictionResult, List[PredictionResult]],
+    summary="Execute Inference",
+    description="Executes a prediction against the active CardioStack model. Supports both a single patient object or a batch list of patients. Returns the predicted risk class (1 for disease, 0 for healthy) and probability."
+)
 def predict_endpoint(patient: Union[PatientInput, List[PatientInput]], _ = Depends(verify_api_key)):
-    """
-    Executes inference against the active model.
-    Pydantic automatically validates the schema and returns 422 if invalid.
-    Supports both single patient predictions and batch predictions.
-    """
     try:
         # Convert Pydantic model to dictionary for our existing inference pipeline
         if isinstance(patient, list):
