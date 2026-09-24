@@ -18,13 +18,15 @@ def get_candidate_models(random_state=RANDOM_STATE) -> dict:
         dict: A mapping from model string identifiers to their respective Scikit-Learn estimators.
     """
     
+    # Tuned hyperparameters sourced from results/tuning_results.json.
+    # If the dataset or candidate models change, run_tuning.py MUST be regenerated and these values updated.
     models = {
-        "logistic_regression": LogisticRegression(random_state=random_state, max_iter=1000),
-        "knn": KNeighborsClassifier(),
-        "random_forest": RandomForestClassifier(random_state=random_state),
-        "extra_trees": ExtraTreesClassifier(random_state=random_state),
-        "gradient_boosting": GradientBoostingClassifier(random_state=random_state),
-        "xgboost": XGBClassifier(random_state=random_state, eval_metric='logloss'),
+        "logistic_regression": LogisticRegression(random_state=random_state, max_iter=1000, C=9.19670656388511, solver='liblinear'),
+        "knn": KNeighborsClassifier(metric='manhattan', n_neighbors=10, weights='distance'),
+        "random_forest": RandomForestClassifier(random_state=random_state, max_depth=5, min_samples_split=6, n_estimators=86),
+        "extra_trees": ExtraTreesClassifier(random_state=random_state, max_depth=5, min_samples_split=3, n_estimators=51),
+        "gradient_boosting": GradientBoostingClassifier(random_state=random_state, learning_rate=0.1812364097191249, max_depth=7, n_estimators=174, subsample=0.8411052245211356),
+        "xgboost": XGBClassifier(random_state=random_state, eval_metric='logloss', learning_rate=0.049913869295142875, max_depth=3, n_estimators=111, subsample=0.818543604430918),
     }
     
     # ==========================================
@@ -33,10 +35,11 @@ def get_candidate_models(random_state=RANDOM_STATE) -> dict:
     # 1. Base Learners:
     # Operating completely in PARALLEL, they independently process the exact 
     # same preprocessed feature matrix (X).
+    # Hyperparameters tuned via run_tuning.py (see results/tuning_results.json). Regenerate if dataset changes.
     base_learners = [
-        ('rf', RandomForestClassifier(random_state=random_state)),
-        ('xgb', XGBClassifier(random_state=random_state, eval_metric='logloss')),
-        ('et', ExtraTreesClassifier(random_state=random_state))
+        ('rf', RandomForestClassifier(random_state=random_state, max_depth=10, n_estimators=53)),
+        ('xgb', XGBClassifier(random_state=random_state, eval_metric='logloss', learning_rate=0.19183313395106402, max_depth=6, n_estimators=164)),
+        ('et', ExtraTreesClassifier(random_state=random_state, max_depth=5, n_estimators=124))
     ]
     
     # 2. Meta-Learner:

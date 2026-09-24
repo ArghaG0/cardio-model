@@ -10,10 +10,12 @@ requires-python = ">=3.13"
 dependencies = [
     "fastapi>=0.141.1",
     "joblib>=1.5.3",
+    "matplotlib",
     "numpy>=2.5.2",
     "pandas>=3.0.5",
     "pydantic>=2.13.4",
     "scikit-learn>=1.9.0",
+    "shap",
     "uvicorn>=0.52.4",
     "xgboost>=3.4.1",
 ]

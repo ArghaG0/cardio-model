@@ -1,0 +1,103 @@
+{
+    "knn": {
+        "best_parameters": {
+            "metric": "manhattan",
+            "n_neighbors": 10,
+            "weights": "distance"
+        },
+        "best_cv_recall": 0.9086419753086419,
+        "search_space_tried": {
+            "model__n_neighbors": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E851010>",
+            "model__weights": "['uniform', 'distance']",
+            "model__metric": "['euclidean', 'manhattan', 'minkowski']"
+        }
+    },
+    "random_forest": {
+        "best_parameters": {
+            "max_depth": 5,
+            "min_samples_split": 6,
+            "n_estimators": 86
+        },
+        "best_cv_recall": 0.9061728395061728,
+        "search_space_tried": {
+            "model__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E8AD6D0>",
+            "model__max_depth": "[None, 5, 10, 15]",
+            "model__min_samples_split": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E8ACCD0>"
+        }
+    },
+    "extra_trees": {
+        "best_parameters": {
+            "max_depth": 5,
+            "min_samples_split": 3,
+            "n_estimators": 51
+        },
+        "best_cv_recall": 0.8987654320987655,
+        "search_space_tried": {
+            "model__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E833100>",
+            "model__max_depth": "[None, 5, 10, 15]",
+            "model__min_samples_split": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E833360>"
+        }
+    },
+    "gradient_boosting": {
+        "best_parameters": {
+            "learning_rate": 0.1812364097191249,
+            "max_depth": 7,
+            "n_estimators": 174,
+            "subsample": 0.8411052245211356
+        },
+        "best_cv_recall": 0.8987654320987655,
+        "search_space_tried": {
+            "model__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E88E570>",
+            "model__learning_rate": "<scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x0000021A6E8512B0>",
+            "model__max_depth": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E8D45A0>",
+            "model__subsample": "<scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x0000021A6E8ADD10>"
+        }
+    },
+    "xgboost": {
+        "best_parameters": {
+            "learning_rate": 0.049913869295142875,
+            "max_depth": 3,
+            "n_estimators": 111,
+            "subsample": 0.818543604430918
+        },
+        "best_cv_recall": 0.893827160493827,
+        "search_space_tried": {
+            "model__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E8D46B0>",
+            "model__learning_rate": "<scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x0000021A6E8ADF90>",
+            "model__max_depth": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E85BE50>",
+            "model__subsample": "<scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x0000021A6E8335C0>"
+        }
+    },
+    "logistic_regression": {
+        "best_parameters": {
+            "C": 9.19670656388511,
+            "solver": "liblinear"
+        },
+        "best_cv_recall": 0.8716049382716049,
+        "search_space_tried": {
+            "model__C": "<scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x0000021A6E833820>",
+            "model__solver": "['lbfgs', 'liblinear']"
+        }
+    },
+    "cardiostack_v2": {
+        "best_parameters": {
+            "et__max_depth": 5,
+            "et__n_estimators": 124,
+            "rf__max_depth": 10,
+            "rf__n_estimators": 53,
+            "xgb__learning_rate": 0.19183313395106402,
+            "xgb__max_depth": 6,
+            "xgb__n_estimators": 164
+        },
+        "best_cv_recall": 0.9037037037037038,
+        "search_space_tried": {
+            "model__rf__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E924150>",
+            "model__rf__max_depth": "[None, 5, 10]",
+            "model__xgb__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E8DD7C0>",
+            "model__xgb__learning_rate": "<scipy.stats._distn_infrastructure.rv_continuous_frozen object at 0x0000021A6E88E7B0>",
+            "model__xgb__max_depth": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E8DDA90>",
+            "model__et__n_estimators": "<scipy.stats._distn_infrastructure.rv_discrete_frozen object at 0x0000021A6E92C050>",
+            "model__et__max_depth": "[None, 5, 10]"
+        }
+    }
+}
