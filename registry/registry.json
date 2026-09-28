@@ -309,6 +309,85 @@
             },
             "promotion_status": "rejected",
             "decision_reason": "Challenger rejected: Tied/Lower metrics. Retaining Champion."
+        },
+        "v5": {
+            "name": "knn",
+            "version": "v5",
+            "artifact_path": "D:\\Projects\\patients\\registry\\artifacts\\model_v5.pkl",
+            "created_at": "2026-09-28T04:32:11.911184Z",
+            "environment": {
+                "python": "3.13.5",
+                "scikit-learn": "1.8.0",
+                "xgboost": "3.2.0",
+                "pandas": "2.3.2",
+                "numpy": "2.3.3"
+            },
+            "cv_metrics": {
+                "accuracy_mean": 0.8677010530239493,
+                "accuracy_std": 0.022420752081746837,
+                "accuracy_folds": [
+                    0.8775510204081632,
+                    0.8231292517006803,
+                    0.8775510204081632,
+                    0.8767123287671232,
+                    0.8835616438356164
+                ],
+                "precision_mean": 0.8625488507100725,
+                "precision_std": 0.040152971435671946,
+                "precision_folds": [
+                    0.8705882352941177,
+                    0.7835051546391752,
+                    0.8888888888888888,
+                    0.8795180722891566,
+                    0.8902439024390244
+                ],
+                "recall_mean": 0.9086419753086419,
+                "recall_std": 0.01674649378549448,
+                "recall_folds": [
+                    0.9135802469135802,
+                    0.9382716049382716,
+                    0.8888888888888888,
+                    0.9012345679012346,
+                    0.9012345679012346
+                ],
+                "f1_mean": 0.8840674324260419,
+                "f1_std": 0.015239303823855854,
+                "f1_folds": [
+                    0.891566265060241,
+                    0.8539325842696629,
+                    0.8888888888888888,
+                    0.8902439024390244,
+                    0.8957055214723927
+                ],
+                "roc_auc_mean": 0.9182362082362083,
+                "roc_auc_std": 0.016072571042129783,
+                "roc_auc_folds": [
+                    0.9206883651328095,
+                    0.8868312757201645,
+                    0.9262065095398428,
+                    0.9259259259259259,
+                    0.9315289648622982
+                ]
+            },
+            "test_metrics": {
+                "accuracy": 0.8913043478260869,
+                "precision": 0.9270833333333334,
+                "recall": 0.8725490196078431,
+                "f1": 0.898989898989899,
+                "roc_auc": 0.9387852702056432,
+                "tp": 89,
+                "tn": 75,
+                "fp": 7,
+                "fn": 13
+            },
+            "gate_results": {
+                "recall_passed": true,
+                "f1_passed": true,
+                "roc_auc_passed": true,
+                "overall_passed": true
+            },
+            "promotion_status": "rejected",
+            "decision_reason": "Challenger rejected: Lower Recall. Retaining Champion."
         }
     }
 }

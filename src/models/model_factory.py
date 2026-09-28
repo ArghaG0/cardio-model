@@ -19,6 +19,9 @@ def get_candidate_models(random_state=RANDOM_STATE) -> dict:
     """
     
     # Tuned hyperparameters sourced from results/tuning_results.json.
+    # NOTE: The active Champion artifact (v2) was trained using default parameters. 
+    # Because this file now holds tuned hyperparameters, it no longer accurately 
+    # reproduces the `v2` artifact.
     # If the dataset or candidate models change, run_tuning.py MUST be regenerated and these values updated.
     models = {
         "logistic_regression": LogisticRegression(random_state=random_state, max_iter=1000, C=9.19670656388511, solver='liblinear'),

@@ -167,6 +167,7 @@ Handles model versioning, promotion, rollback, tracking evaluation metadata, and
 - **Recall (Holdout):** 0.9020
 - **F1 (Holdout):** 0.8932
 - **ROC-AUC (Holdout):** 0.9326
+- **Tuning Outcome:** Flat-CV hyperparameter tuning was executed across all models. Tuned KNN achieved a higher CV recall in development (0.9086) compared to CardioStack v2. However, this performance did not transfer to the holdout set, where KNN only reached a recall of 0.8725 against v2's 0.9020. As a result, the tuned KNN (v5) was rejected by the quality gates, and the untuned `v2` remains the active Champion. Note that `model_factory.py` now holds the tuned hyperparameters, meaning the current code does not reproduce the registered untuned `v2` artifact.
 
 ## 16. Reproducibility
 - **Seed:** `42`

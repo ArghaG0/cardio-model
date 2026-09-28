@@ -2,7 +2,7 @@ import json
 import pandas as pd
 from pathlib import Path
 from src.models.model_factory import get_candidate_models
-from src.evaluation.evaluator import evaluate_model_cv
+from src.evaluation.cv_evaluator import evaluate_model_cv
 
 def run_development_pipeline():
     print("--- Phase 4: Development Model Comparison ---")

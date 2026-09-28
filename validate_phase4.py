@@ -6,7 +6,7 @@ from pathlib import Path
 print("--- Phase 4 Validation Script ---")
 
 # 1. Check that test.csv is never loaded in development code
-evaluator_code = Path("src/evaluation/evaluator.py").read_text()
+evaluator_code = Path("src/evaluation/cv_evaluator.py").read_text()
 run_dev_code = Path("run_development.py").read_text()
 
 if "test.csv" in evaluator_code or "test.csv" in run_dev_code:
