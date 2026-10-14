@@ -18,6 +18,7 @@ registry/artifacts/*.joblib
 
 # Graphs and Plots
 reports/
+tests/
 
 # IDE / Editor
 .vscode/
