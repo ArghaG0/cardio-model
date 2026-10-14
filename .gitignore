@@ -18,7 +18,9 @@ registry/artifacts/*.joblib
 
 # Graphs and Plots
 reports/
-tests/
+
+# Local testing and validation scripts
+/tests/
 
 # IDE / Editor
 .vscode/

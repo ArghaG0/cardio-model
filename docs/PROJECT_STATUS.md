@@ -18,7 +18,7 @@ The current state contains a mix of newly created architectural files and legacy
 
 **Newly Created (Active):**
 - `src/config/config.py`: Defines immutable project paths, splits ratio (0.20), and random state (42).
-- `src/data/dataset.py`: Defines the single canonical data pipeline. Loads `heart.csv` exclusively and writes isolated splits.
+- `src/dataset/dataset.py`: Defines the single canonical data pipeline. Loads `heart.csv` exclusively and writes isolated splits.
 - `src/registry/model_registry.py`: Defines `ModelRegistry` class for JSON-based tracking.
 - `registry/registry.json`: Active JSON registry for versioning. Now captures complete environment metadata (Python/sklearn/XGBoost/pandas/numpy versions) at registration time.
 - `data/splits/train.csv` & `data/splits/test.csv`: Active datasets for development and final holdout.

@@ -110,14 +110,14 @@ py run_production.py
 ```
 
 ## 11. Validation Scripts
-The project includes a suite of integration validations that test the architectural guarantees:
-*   `py validate_phase1.py`: Verifies canonical dataset integrity, eliminates duplicates, and proves reproducible deterministic splitting.
-*   `py validate_phase2.py`: Verifies the `ColumnTransformer` handles unseen categories securely and does not suffer from global fitting leakage.
-*   `py validate_phase3.py`: Validates the CardioStack v2 StackingClassifier architecture and its isolation capabilities.
-*   `py validate_phase4.py`: Verifies that the Stratified CV development pipeline correctly ranks models without touching the test set.
-*   `py validate_phase5.py`: Validates the Champion/Challenger promotion lifecycle and quality gate enforcement on holdout data.
-*   `py validate_phase6.py`: Verifies production inference safely rejects illegal schemas (like target variables) and executes clean predictions against the dynamically read `active_version`.
-*   `py validate_phase7.py`: Verifies the registry successfully validates corrupted artifacts, maintains historical metadata, executes rollbacks, and triggers dynamic cache reloads in production against the dynamically read `active_version`.
+Local integration validations live in `tests/`, which is intentionally ignored by Git and is not included in a fresh clone. Run these commands from the project root using the project Python environment. Phase 1 regenerates dataset splits; phases 4 and 5 require reports from `run_development.py`; phase 7 temporarily modifies and then restores the registry.
+*   `py tests/validate_phase1.py`: Verifies canonical dataset integrity, eliminates duplicates, and proves reproducible deterministic splitting.
+*   `py tests/validate_phase2.py`: Verifies the `ColumnTransformer` handles unseen categories securely and does not suffer from global fitting leakage.
+*   `py tests/validate_phase3.py`: Validates the CardioStack v2 StackingClassifier architecture and its isolation capabilities.
+*   `py tests/validate_phase4.py`: Verifies that the Stratified CV development pipeline correctly ranks models without touching the test set.
+*   `py tests/validate_phase5.py`: Validates the Champion/Challenger promotion lifecycle and quality gate enforcement on holdout data.
+*   `py tests/validate_phase6.py`: Verifies production inference safely rejects illegal schemas (like target variables) and executes clean predictions against the dynamically read `active_version`.
+*   `py tests/validate_phase7.py`: Verifies the registry successfully validates corrupted artifacts, maintains historical metadata, executes rollbacks, and triggers dynamic cache reloads in production against the dynamically read `active_version`.
 
 ## 12. Project Structure
 The repository strictly divides the active MLOps engine from archived experimental work:
@@ -135,7 +135,7 @@ patients/
 ├── results/                  # (Generated CV metrics and comparisons)
 ├── src/
 │   ├── config/               # (Project globals)
-│   ├── data/                 # (Canonical dataset loaders)
+│   ├── dataset/              # (Canonical dataset loaders)
 │   ├── evaluation/           # (CV and Holdout engines)
 │   ├── features/             # (Leakage-free preprocessing)
 │   ├── models/               # (Centralized model factory)
