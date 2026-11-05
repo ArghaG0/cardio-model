@@ -1,10 +1,11 @@
+import argparse
 import json
 import pandas as pd
 from pathlib import Path
 from src.models.model_factory import get_candidate_models
 from src.evaluation.cv_evaluator import evaluate_model_cv
 
-def run_development_pipeline():
+def run_development_pipeline(tuned: bool = False):
     print("--- Phase 4: Development Model Comparison ---")
     
     # 1. Load ONLY the training split
@@ -19,8 +20,10 @@ def run_development_pipeline():
     print(f"Loaded training data: {X_train.shape[0]} samples.")
     print("WARNING: Test dataset is EXPLICITLY excluded from this phase.\n")
     
-    # 2. Get fresh candidate models
-    models = get_candidate_models()
+    # 2. Get fresh candidate models. run_promotion.py reads the root-level
+    # reports and therefore always uses default models. Promoting a tuned model
+    # requires a separate, explicit decision and is deliberately unsupported here.
+    models = get_candidate_models(tuned=tuned)
     
     results = {}
     comparison_rows = []
@@ -71,7 +74,7 @@ def run_development_pipeline():
     print(display_df.to_string(index=False))
     
     # 5. Save artifacts
-    results_dir = Path("results")
+    results_dir = Path("results/tuned_flat_cv") if tuned else Path("results")
     results_dir.mkdir(exist_ok=True)
     
     json_path = results_dir / "development_results.json"
@@ -87,4 +90,11 @@ def run_development_pipeline():
     print("NOTE: No production model was created. Promotion is reserved for a later phase.")
 
 if __name__ == "__main__":
-    run_development_pipeline()
+    parser = argparse.ArgumentParser(description="Run development cross-validation.")
+    parser.add_argument(
+        "--tuned",
+        action="store_true",
+        help="evaluate recorded tuned parameters and write only to results/tuned_flat_cv/",
+    )
+    args = parser.parse_args()
+    run_development_pipeline(tuned=args.tuned)
