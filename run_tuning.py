@@ -1,3 +1,4 @@
+import argparse
 import json
 import platform
 from datetime import datetime, timezone
@@ -64,7 +65,7 @@ def _all_candidate_scores(search: RandomizedSearchCV) -> list[dict]:
     return candidates
 
 
-def run_tuning():
+def run_tuning(output_path: Path | None = None, n_jobs: int = -1):
     print("--- Phase: Hyperparameter Optimization ---")
     print("CRITICAL METHODOLOGY GUARDRAIL: Tuning must NEVER be re-run in response to a holdout evaluation result.")
     print("The holdout set can be checked after tuning, but must not influence a second tuning attempt.")
@@ -74,8 +75,7 @@ def run_tuning():
     if not train_path.exists():
         raise FileNotFoundError(f"Missing {train_path}. Run Phase 1 split first.")
 
-    results_dir = Path("results")
-    out_path = results_dir / "tuning_results.json"
+    out_path = output_path or Path("results/tuning_results.json")
     if out_path.exists():
         raise FileExistsError(
             f"Refusing to overwrite the existing tuning experiment record: {out_path}. "
@@ -159,7 +159,7 @@ def run_tuning():
             y_train,
             scoring=SCORING,
             cv=cv,
-            n_jobs=-1,
+            n_jobs=n_jobs,
             error_score="raise",
         )
         search = RandomizedSearchCV(
@@ -169,7 +169,7 @@ def run_tuning():
             scoring=SCORING,
             refit="recall",
             cv=cv,
-            n_jobs=-1,
+            n_jobs=n_jobs,
             random_state=RANDOM_STATE + MODEL_SEED_OFFSETS[model_name],
             error_score="raise",
         )
@@ -196,7 +196,7 @@ def run_tuning():
         print(f"  Best Recall: {search.best_score_:.4f}")
         print(f"  Best Params: {best_parameters}\n")
 
-    results_dir.mkdir(exist_ok=True)
+    out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8") as tuning_file:
         json.dump(tuning_results, tuning_file, indent=4)
 
@@ -204,4 +204,17 @@ def run_tuning():
 
 
 if __name__ == "__main__":
-    run_tuning()
+    parser = argparse.ArgumentParser(description="Run a training-only tuning experiment.")
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help="write a separately approved experiment record to this path",
+    )
+    parser.add_argument(
+        "--n-jobs",
+        type=int,
+        default=-1,
+        help="parallel worker count for cross-validation and hyperparameter search",
+    )
+    args = parser.parse_args()
+    run_tuning(output_path=args.output, n_jobs=args.n_jobs)
