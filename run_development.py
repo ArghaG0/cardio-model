@@ -20,9 +20,9 @@ def run_development_pipeline(tuned: bool = False):
     print(f"Loaded training data: {X_train.shape[0]} samples.")
     print("WARNING: Test dataset is EXPLICITLY excluded from this phase.\n")
     
-    # 2. Get fresh candidate models. run_promotion.py reads the root-level
-    # reports and therefore always uses default models. Promoting a tuned model
-    # requires a separate, explicit decision and is deliberately unsupported here.
+    # run_promotion.py reads results/untuned_results/ and always uses default
+    # models. Promoting a tuned model from results/tuned_results/ would require
+    # a separate, explicit decision.
     models = get_candidate_models(tuned=tuned)
     
     results = {}
@@ -74,8 +74,8 @@ def run_development_pipeline(tuned: bool = False):
     print(display_df.to_string(index=False))
     
     # 5. Save artifacts
-    results_dir = Path("results/tuned_flat_cv") if tuned else Path("results")
-    results_dir.mkdir(exist_ok=True)
+    results_dir = Path("results/tuned_results") if tuned else Path("results/untuned_results")
+    results_dir.mkdir(parents=True, exist_ok=True)
     
     json_path = results_dir / "development_results.json"
     csv_path = results_dir / "model_comparison.csv"
@@ -94,7 +94,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tuned",
         action="store_true",
-        help="evaluate recorded tuned parameters and write only to results/tuned_flat_cv/",
+        help="evaluate recorded tuned parameters and write only to results/tuned_results/",
     )
     args = parser.parse_args()
     run_development_pipeline(tuned=args.tuned)

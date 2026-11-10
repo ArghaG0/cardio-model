@@ -30,7 +30,7 @@ def run_promotion_pipeline():
     print(f"Loaded train ({len(X_train)} samples) and holdout test ({len(X_test)} samples).")
     
     # 2. Identify Challenger
-    comp_path = Path("results/model_comparison.csv")
+    comp_path = Path("results/untuned_results/model_comparison.csv")
     if not comp_path.exists():
         raise FileNotFoundError("Development results missing. Run Phase 4 first.")
     
@@ -41,7 +41,7 @@ def run_promotion_pipeline():
     # 3. Train Challenger Pipeline on FULL training set
     print("Training full Challenger pipeline on complete training set...")
     preprocessor = create_preprocessor()
-    candidate_estimator = get_candidate_models()[challenger_name]
+    candidate_estimator = get_candidate_models(tuned=False)[challenger_name]
     
     challenger_pipeline = Pipeline([
         ('preprocessor', preprocessor),
@@ -131,9 +131,7 @@ def run_promotion_pipeline():
     artifacts_dir = REGISTRY_DIR / "artifacts"
     artifacts_dir.mkdir(parents=True, exist_ok=True)
     
-    # Pre-register to get version number
-    # We will use the development metrics from results/development_results.json
-    with open("results/development_results.json", "r") as f:
+    with open("results/untuned_results/development_results.json", "r") as f:
         dev_results = json.load(f)
         
     cv_metrics = dev_results.get(challenger_name, {})

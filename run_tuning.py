@@ -39,6 +39,31 @@ def _score_summary(scores: dict, prefix: str = "test_") -> dict:
     }
 
 
+def _json_value(value):
+    return value.item() if isinstance(value, np.generic) else value
+
+
+def _all_candidate_scores(search: RandomizedSearchCV) -> list[dict]:
+    candidates = []
+    for index, parameters in enumerate(search.cv_results_["params"]):
+        candidates.append(
+            {
+                "parameters": {
+                    key.removeprefix("model__"): _json_value(value)
+                    for key, value in parameters.items()
+                },
+                "cv_scores": {
+                    metric: {
+                        "mean": float(search.cv_results_[f"mean_test_{metric}"][index]),
+                        "std": float(search.cv_results_[f"std_test_{metric}"][index]),
+                    }
+                    for metric in SCORING
+                },
+            }
+        )
+    return candidates
+
+
 def run_tuning():
     print("--- Phase: Hyperparameter Optimization ---")
     print("CRITICAL METHODOLOGY GUARDRAIL: Tuning must NEVER be re-run in response to a holdout evaluation result.")
@@ -108,7 +133,7 @@ def run_tuning():
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
     tuning_results = {
         "meta": {
-            "date": datetime.now(timezone.utc).date().isoformat(),
+            "date": datetime.now(timezone.utc).isoformat(),
             "n_iter": N_ITER,
             "random_state": RANDOM_STATE,
             "seed_offsets": MODEL_SEED_OFFSETS,
@@ -151,7 +176,7 @@ def run_tuning():
         search.fit(X_train, y_train)
 
         best_parameters = {
-            key.removeprefix("model__"): value
+            key.removeprefix("model__"): _json_value(value)
             for key, value in search.best_params_.items()
         }
         tuning_results[model_name] = {
@@ -166,6 +191,7 @@ def run_tuning():
                 }
                 for metric in SCORING
             },
+            "all_candidates": _all_candidate_scores(search),
         }
         print(f"  Best Recall: {search.best_score_:.4f}")
         print(f"  Best Params: {best_parameters}\n")

@@ -66,7 +66,7 @@ Command:
 ```bash
 py run_development.py
 ```
-**Function:** Loads only the training data and evaluates all candidate models using a unified preprocessing pipeline across Stratified K-Fold cross-validation. It outputs a comprehensive comparison report (`results/development_results.json` and `model_comparison.csv`) ranking the models. It **does not** deploy or promote a production model.
+**Function:** Loads only the training data and evaluates all candidate models using a unified preprocessing pipeline across Stratified K-Fold cross-validation. It outputs a comprehensive untuned comparison report (`results/untuned_results/development_results.json` and `results/untuned_results/model_comparison.csv`) ranking the models. It **does not** deploy or promote a production model.
 
 ## 7. Promotion Pipeline
 Command:
