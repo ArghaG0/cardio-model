@@ -8,25 +8,16 @@ import numpy as np
 import pandas as pd
 import sklearn
 import xgboost
-from scipy.stats import randint, uniform
 from sklearn.model_selection import RandomizedSearchCV, StratifiedKFold, cross_validate
 from sklearn.pipeline import Pipeline
 
 from src.config.config import RANDOM_STATE
 from src.features.preprocessing import create_preprocessor
 from src.models.model_factory import get_candidate_models
+from src.models.search_spaces import MODEL_SEED_OFFSETS, SEARCH_SPACES
 
 
 N_ITER = 10
-MODEL_SEED_OFFSETS = {
-    "knn": 0,
-    "random_forest": 1,
-    "extra_trees": 2,
-    "gradient_boosting": 3,
-    "xgboost": 4,
-    "logistic_regression": 5,
-    "cardiostack_v2": 6,
-}
 SCORING = {"recall": "recall", "f1": "f1", "roc_auc": "roc_auc"}
 
 
@@ -86,49 +77,6 @@ def run_tuning(output_path: Path | None = None, n_jobs: int = -1):
     X_train = df_train.drop(columns=["HeartDisease"])
     y_train = df_train["HeartDisease"]
 
-    search_spaces = {
-        "knn": {
-            "model__n_neighbors": randint(3, 15),
-            "model__weights": ["uniform", "distance"],
-            "model__metric": ["euclidean", "manhattan", "minkowski"],
-        },
-        "random_forest": {
-            "model__n_estimators": randint(50, 300),
-            "model__max_depth": [None, 5, 10, 15],
-            "model__min_samples_split": randint(2, 10),
-        },
-        "extra_trees": {
-            "model__n_estimators": randint(50, 300),
-            "model__max_depth": [None, 5, 10, 15],
-            "model__min_samples_split": randint(2, 10),
-        },
-        "gradient_boosting": {
-            "model__n_estimators": randint(50, 200),
-            "model__learning_rate": uniform(0.01, 0.2),
-            "model__max_depth": randint(3, 8),
-            "model__subsample": uniform(0.7, 0.3),
-        },
-        "xgboost": {
-            "model__n_estimators": randint(50, 200),
-            "model__learning_rate": uniform(0.01, 0.2),
-            "model__max_depth": randint(3, 8),
-            "model__subsample": uniform(0.7, 0.3),
-        },
-        "logistic_regression": {
-            "model__C": uniform(0.1, 10),
-            "model__solver": ["lbfgs", "liblinear"],
-        },
-        "cardiostack_v2": {
-            "model__rf__n_estimators": randint(50, 200),
-            "model__rf__max_depth": [None, 5, 10],
-            "model__xgb__n_estimators": randint(50, 200),
-            "model__xgb__learning_rate": uniform(0.01, 0.2),
-            "model__xgb__max_depth": randint(3, 8),
-            "model__et__n_estimators": randint(50, 200),
-            "model__et__max_depth": [None, 5, 10],
-        },
-    }
-
     models = get_candidate_models(RANDOM_STATE, tuned=False)
     cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=RANDOM_STATE)
     tuning_results = {
@@ -147,7 +95,7 @@ def run_tuning(output_path: Path | None = None, n_jobs: int = -1):
 
     # The existing tuning_results.json came from the earlier script version and
     # intentionally has no untuned-default comparison.
-    for model_name, param_space in search_spaces.items():
+    for model_name, param_space in SEARCH_SPACES.items():
         print(f"Tuning {model_name}...")
         pipeline = Pipeline([
             ("preprocessor", create_preprocessor()),
